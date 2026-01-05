@@ -58,7 +58,7 @@ async function verifySession(req: Request) {
     const originHash = origin ? sha256Base64Url(origin) : "";
 
     if (payload.uaHash !== uaHash) return { ok: false as const, reason: "ua_mismatch" };
-    if ((payload.originHash || "") !== (originHash || "")) return { ok: false as const, reason: "origin_mismatch" };
+    if (origin && payload.originHash && payload.originHash !== originHash) return { ok: false as const, reason: "origin_mismatch" };
 
     return { ok: true as const };
   } catch {
