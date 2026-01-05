@@ -4,99 +4,96 @@ An early-stage AI project focused on building a fully-functioning **image-recogn
 
 Planned future capabilities:
 
-* Accepting image inputs (JPEG/PNG)
+* Accepting image inputs (JPEG/PNG) --added spaceClarityTool
+  -Need to decide on file storade/retention method.
 * Detecting clutter types, objects, and layout information
 * Estimating organization effort, time, and resource requirements
 * Exporting structured summaries or reports
 * Providing optional visual overlays or heatmaps for clutter
-* Web or mobile frontend
+* Web or mobile frontend --added spaceClarityTool
 
-## 📁 Project Structure ~currently~
+## 📁 Project Structure (current)
 
 ```
-Estimator
-├── src/                # Project files
-│   └── assets/         # Supporting files i.e. images        
-│   └── context.md
-│   └── estimator.py    # Main driver file
-└── .gitignore          # Ignored files for github
-└── README.md           # Project documentation
-└── requirements.tx     # Library and project additions
+LifeCaddieEstimator/
+├── .gitignore
+├── .env*                 # local env files (not checked in)
+├── package.json          # Frontend deps, scripts (Next.js)
+├── package-lock.json     # Exact installed JS deps
+├── requirements.txt      # Python dependencies (estimator)
+├── README.md             # Project documentation (this file)
+├── next.config.mjs       # Next.js configuration
+├── tsconfig.json         # TypeScript config for frontend
+├── node_modules/         # JS dependencies (local)
+├── .next/                # Next.js build output (local)
+├── venv/                 # optional Python venv (local)
+└── src/
+	├── app/
+	│   ├── api/
+	│   │   ├── analyze/route.ts   # Server API: receives uploads, calls OpenAI
+	│   │   └── session/route.ts   # Server API: issues short-lived session tokens for uploads
+	│   ├── layout.tsx              # App layout for Next.js
+	│   ├── page.tsx                # Root page
+	│   └── space-clarity/
+	│       ├── page.tsx            # Space clarity page wrapper
+	│       └── SpaceClarityTool.tsx # Client UI: upload, intention/feeling inputs
+	├── assets/                     # Static assets used by the app
+	├── context.md                  # Notes / project context
+	└── estimator.py                # Experimental Python estimator script
 ```
+# Life Caddie Estimator App
+
+An early-stage AI project focused on building a fully-functioning image-recognition application capable of generating organizing estimates from photos of cluttered rooms.
 
 ## Requirements
 
-* Python 3.12.3 (recommended)
-* Check the __requirements.txt__ file for specific libraries
+* Python 3.12+ for any Python components
+* Node.js (LTS, v18+ recommended) and `npm` for the Next.js frontend
 * OpenAI API key
 
-## Future Roadmap
+## Getting started
 
-* **Image Upload Pipeline**
-  * Accept photo input (using local paths)
-  * Turn towards image upload
-  * Finalize with front-end input for the image
-* **Image Recognition**
-  * Detect clutter zones, classify items, measure density
-* **Estimation Engine**
-  * AI-driven scoring for difficulty, time, manpower, and organizational method
-  * Work directly with Life Caddie leaders to increase estimation precision
-* **UX/UI**
-  * Front end for adding images, context, and displaying estimated results
-* **Model Fine-Tuning**
-  * Improve accuracy with custom imagesets and before-afters
-
-## Getting Started
-
-If you want to get the project working locally.. do this:
-
-### 1. Clone the Repository
-
-First, clone the project repository to your local machine using Git:
+1. Clone the repository:
 
 ```bash
 git clone <REPOSITORY_URL>
 cd <REPOSITORY_NAME>
 ```
 
-Replace `<REPOSITORY_URL>` with the actual URL of the repository.
-
-### 2. Install Python Dependencies
-
-Make sure you have Python installed (preferably Python 3.9+).
-
-All required Python libraries are listed in the `requirements.txt` file. Install them using:
-
-```bash
-pip install -r requirements.txt
-```
-
-It is recommended to use a virtual environment:
+2. Python (optional): install Python deps if you plan to use `estimator.py`:
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Windows: venv\Scripts\activate
+# macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Create a `.env` File and Add Your API Key
+3. Frontend (Next.js): install and run the dev server
 
-The project uses environment variables to manage sensitive information such as API keys.
-
-1. Create a `.env` file in the root directory of the project:
-
-```bash
-touch .env
+```powershell
+npm install
+npm run dev
 ```
 
-2. Add your API key to the `.env` file:
+The app runs at http://localhost:3000 by default.
 
-```env
-API_KEY=your_api_key_here
-```
+## Environment variables
 
-Make sure **not** to commit the `.env` file to version control. It should be included in `.gitignore`.
+Create a `.env` (do not commit) with at least:
 
----
+- `API_KEY` — your OpenAI API key (required)
+- `LC_SESSION_JWT_SECRET` — 32+ character secret used to sign session tokens (required for `/api/session`/upload)
+- `OPENAI_MODEL` — optional model override (defaults to `gpt-4.1-mini` in code)
 
-You are now ready to start working on the project! Run `estimator.py` to recieve an estimation on the provided image!
+## Uploads and API notes
+
+- The upload UI is implemented in `src/app/space-clarity/SpaceClarityTool.tsx`.
+- The server route that handles uploads and sends the image to OpenAI is `src/app/api/analyze/route.ts`.
+- Currently, uploaded photos are processed in memory and converted to a base64 data URL; they are NOT written to disk or persisted by default.
+ - The upload UI is implemented in `src/app/space-clarity/SpaceClarityTool.tsx`.
+ - The server route that handles uploads and sends the image to OpenAI is `src/app/api/analyze/route.ts`.
+ - The session/token route that issues short-lived JWTs used by the client is `src/app/api/session/route.ts`.
+ - Currently, uploaded photos are processed in memory and converted to a base64 data URL; they are NOT written to disk or persisted by default.
+
+
