@@ -108,7 +108,7 @@ export async function POST(req: Request) {
     const chatHistoryRaw = String(form.get("chat_history") || "").trim();
     const chatHistory = chatHistoryRaw ? safeJsonParse(chatHistoryRaw) || [] : [];
 
-    const isFollowUp = Array.isArray(chatHistory) && chatHistory.some(msg => msg.who === "user" && msg.text && msg.text.includes("Photo uploaded."));
+    const isFollowUp = Array.isArray(chatHistory) && chatHistory.filter(msg => msg.who === "user" && msg.text && msg.text.includes("Photo uploaded.")).length > 1;
 
     if (!intention || !feeling || !photo) {
       return NextResponse.json(

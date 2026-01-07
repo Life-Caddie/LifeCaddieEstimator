@@ -442,9 +442,55 @@ export default function SpaceClarityTool() {
                   type="button"
                   style={styles.pill}
                   disabled={busy}
-                  onClick={() => {
-                    addMessage(p, "user");
-                    addMessage("Got it. If you’d like, add one detail below and I’ll tailor the next step.", "bot");
+                  onClick={async () => {
+                    if (busy) return;
+                    const updatedMessages = [...messages, { who: "user", text: p } as Msg];
+                    setMessages(updatedMessages);
+
+                    setBusy(true);
+                    setConnBadge("Working…");
+
+                    // show temporary thinking bubble
+                    setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
+
+                    try {
+                      const result = await converse(updatedMessages);
+
+                      // remove the last thinking bubble
+                      setMessages((prev) => {
+                        const copy = [...prev];
+                        if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
+                          copy.pop();
+                        }
+                        return copy;
+                      });
+
+                      const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
+                      const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : [];
+
+                      outMsgs.forEach((m) => addMessage(String(m), "bot"));
+                      setPills(outPills);
+
+                      setConnBadge("Ready");
+                    } catch (err) {
+                      console.error(err);
+
+                      // replace thinking with error text
+                      setMessages((prev) => {
+                        const copy = [...prev];
+                        if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
+                          copy[copy.length - 1] =
+                            { who: "bot", text: "I couldn’t respond right now. Try again or check your connection." };
+                        } else {
+                          copy.push({ who: "bot", text: "I couldn’t respond right now. Try again or check your connection." });
+                        }
+                        return copy;
+                      });
+
+                      setConnBadge("Check connection");
+                    } finally {
+                      setBusy(false);
+                    }
                   }}
                 >
                   {p}
