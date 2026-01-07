@@ -66,13 +66,6 @@ async function verifySession(req: Request) {
   }
 }
 
-function isAllowedIntention(x: string) {
-  return ["moving", "prepping_to_downsize", "reset", "staging", "caregiving", "other"].includes(x);
-}
-function isAllowedFeeling(x: string) {
-  return ["overwhelmed", "excited", "sad", "motivated", "other"].includes(x);
-}
-
 function safeJsonParse(text: string) {
   try {
     return JSON.parse(text);
@@ -102,76 +95,35 @@ export async function POST(req: Request) {
   try {
     const form = await req.formData();
 
-    const intention = String(form.get("intention") || "").trim();
-    const feeling = String(form.get("feeling") || "").trim();
-    const photo = form.get("photo");
     const chatHistoryRaw = String(form.get("chat_history") || "").trim();
     const chatHistory = chatHistoryRaw ? safeJsonParse(chatHistoryRaw) || [] : [];
 
-    const isFollowUp = Array.isArray(chatHistory) && chatHistory.some(msg => msg.who === "user" && msg.text && msg.text.includes("Photo uploaded."));
-
-    if (!intention || !feeling || !photo) {
+    if (!Array.isArray(chatHistory) || !chatHistory.length) {
       return NextResponse.json(
-        { error: "Missing required fields (photo, intention, feeling)." },
+        { error: "Invalid or missing chat history." },
         { status: 400, headers: corsHeaders(origin) }
       );
     }
-    if (!isAllowedIntention(intention) || !isAllowedFeeling(feeling)) {
-      return NextResponse.json(
-        { error: "Invalid intention or feeling value." },
-        { status: 400, headers: corsHeaders(origin) }
-      );
-    }
-    if (!(photo instanceof File)) {
-      return NextResponse.json(
-        { error: "Invalid photo upload." },
-        { status: 400, headers: corsHeaders(origin) }
-      );
-    }
-
-    // Mobile-friendly limits
-    if (photo.size > 5_000_000) {
-      return NextResponse.json(
-        { error: "Photo too large. Please use a smaller image (try under 5MB)." },
-        { status: 413, headers: corsHeaders(origin) }
-      );
-    }
-
-    const mime = photo.type || "image/jpeg";
-    if (!mime.startsWith("image/")) {
-      return NextResponse.json(
-        { error: "Uploaded file must be an image." },
-        { status: 400, headers: corsHeaders(origin) }
-      );
-    }
-
-    // Convert to base64 data URL for the model call
-    const arrayBuffer = await photo.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-    const dataUrl = `data:${mime};base64,${base64}`;
 
     const instructions = `
 You are Life Caddie, a calm, non-judgmental downsizing & organizing guide.
 
-User inputs:
-- Intention: ${intention}
-- Feeling: ${feeling}
-${isFollowUp ? "- This is a follow-up photo to improve understanding or show progress in organizing the space." : ""}
+Continue the conversation based on the chat history. Provide helpful, kind responses to the user's latest message.
 
 Chat History:
-${chatHistory.map((msg: { who: any; text: any; }) => `${msg.who}: ${msg.text}`).join('\n')}
+${chatHistory.map((msg: any) => `${msg.who}: ${msg.text}`).join('\n')}
 
 Return STRICT JSON ONLY:
 {
-  "messages": string[],       // 3–6 short chat bubbles
-  "quick_actions": string[]   // 3–6 tappable labels
+  "messages": string[],       // 1-3 short chat bubbles for the response
+  "quick_actions": string[]   // 0-3 optional tappable labels
 }
 
 Rules:
 - Kind, no shame.
-- ${isFollowUp ? "Acknowledge progress and provide refined advice based on the new photo and history." : "Give a 10-minute first step."}
+- Keep responses concise and conversational.
 - Avoid recommending buying products.
-- If safety hazards appear, mention gently.
+- If the user mentions progress or needs advice, offer gentle guidance.
 `.trim();
 
     const resp = await openai.responses.create({
@@ -181,31 +133,27 @@ Rules:
         {
           role: "user",
           content: [
-            { type: "input_text", text: isFollowUp ? "Analyze this follow-up photo for progress or improved understanding of the space." : "Analyze this space photo and generate the Clarity Plan." },
-            { type: "input_image", image_url: dataUrl, detail: "auto" }
-
+            { type: "input_text", text: "Continue the conversation based on the history." }
           ]
         }
       ],
-      max_output_tokens: 650,
+      max_output_tokens: 400,
       store: false
     });
 
     const raw = resp.output_text || "";
     const parsed = safeJsonParse(raw);
 
-    const messages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 6) : [];
-    const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 6) : [];
+    const messages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 3) : [];
+    const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 3) : [];
 
     if (!messages.length) {
       return NextResponse.json(
         {
           messages: [
-            "Thanks — I’m here with you. Let’s take one gentle step that creates immediate relief.",
-            "Your first 10-minute step: choose ONE small zone (one shelf, one drawer, one counter corner). Remove anything that obviously doesn’t belong, then put back only what supports that zone’s purpose.",
-            "If you tell me what kind of space this is (kitchen/closet/office/etc.), I can outline the next 2–3 zones in a calm order."
+            "Thanks for sharing that. I'm here to help with your organizing journey."
           ],
-          quick_actions: ["This is a kitchen", "This is a closet", "This is an office", "Help me pick a first zone"]
+          quick_actions: []
         },
         { headers: corsHeaders(origin) }
       );
@@ -213,9 +161,9 @@ Rules:
 
     return NextResponse.json({ messages, quick_actions }, { headers: corsHeaders(origin) });
   } catch (err) {
-    console.error("analyze route error:", err);
+    console.error("conversation route error:", err);
     return NextResponse.json(
-      { error: "Server error while analyzing the image." },
+      { error: "Server error while processing conversation." },
       { status: 500, headers: corsHeaders(origin) }
     );
   }
