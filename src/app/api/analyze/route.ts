@@ -66,7 +66,7 @@ async function verifySession(req: Request) {
   }
 }
 
-function isAllowedIntention(x: string) {
+function isAllowedGoal(x: string) {
   return ["moving", "prepping_to_downsize", "reset", "staging", "caregiving", "other"].includes(x);
 }
 function isAllowedFeeling(x: string) {
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
   try {
     const form = await req.formData();
 
-    const intention = String(form.get("intention") || "").trim();
+    const goal = String(form.get("goal") || "").trim();
     const feeling = String(form.get("feeling") || "").trim();
     const photo = form.get("photo");
     const chatHistoryRaw = String(form.get("chat_history") || "").trim();
@@ -110,15 +110,15 @@ export async function POST(req: Request) {
 
     const isFollowUp = Array.isArray(chatHistory) && chatHistory.filter(msg => msg.who === "user" && msg.text && msg.text.includes("Photo uploaded.")).length > 1;
 
-    if (!intention || !feeling || !photo) {
+    if (!goal || !feeling || !photo) {
       return NextResponse.json(
-        { error: "Missing required fields (photo, intention, feeling)." },
+        { error: "Missing required fields (photo, goal, feeling)." },
         { status: 400, headers: corsHeaders(origin) }
       );
     }
-    if (!isAllowedIntention(intention) || !isAllowedFeeling(feeling)) {
+    if (!isAllowedGoal(goal) || !isAllowedFeeling(feeling)) {
       return NextResponse.json(
-        { error: "Invalid intention or feeling value." },
+        { error: "Invalid goal or feeling value." },
         { status: 400, headers: corsHeaders(origin) }
       );
     }
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
 You are Life Caddie, a calm, non-judgmental downsizing & organizing guide.
 
 User inputs:
-- Intention: ${intention}
+- goal: ${goal}
 - Feeling: ${feeling}
 ${isFollowUp ? "- This is a follow-up photo to improve understanding or show progress in organizing the space." : ""}
 
