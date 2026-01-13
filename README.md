@@ -16,7 +16,7 @@ Planned future capabilities:
 ```
 LifeCaddieEstimator/
 ├── ExperimentalEstimator # Experimental Python estimator script
-├── .gitignore
+├── .gitignore			  # Files to be ignored by Git version control
 ├── next-env.d.ts         # Next.js env build
 ├── next.config.mjs       # Next.js configuration
 ├── package-lock.json     # Exact installed JS deps
@@ -27,7 +27,8 @@ LifeCaddieEstimator/
 └── src/app/
 	├── api/
 	│   ├── analyze/route.ts   # Server API: receives uploads, calls
-	│   └── session/route.ts   # Server API: issues short-lived OpenAI 
+	│   ├── session/route.ts   # Server API: issues short-lived OpenAI
+	│   └── conversation/route.ts # Server API: issues OpenAI conversation flow
 	├── layout.tsx             # App layout for Next.js
 	├── page.tsx               # Root page
 	└── SpaceClarityTool.tsx   # Client UI: upload, intention/feeling inputs

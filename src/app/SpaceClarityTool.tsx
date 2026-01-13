@@ -105,7 +105,27 @@ export default function SpaceClarityTool() {
     return data.token as string;
   }
 
-  async function analyzeSpace(file: File, intentionVal: string, feelingVal: string) {
+  async function converse(messages: Msg[]) {
+    const token = await getSessionToken();
+    const fd = new FormData();
+    fd.append("chat_history", JSON.stringify(messages));
+
+    const resp = await fetch(`${apiBase}/api/conversation`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+
+    if (resp.status === 401) throw new Error("Unauthorized (session invalid/expired).");
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || `Conversation failed (${resp.status}).`);
+    }
+
+    return (await resp.json()) as { messages?: string[]; quick_actions?: string[] };
+  }
+
+  async function analyzeSpace(file: File, intentionVal: string, feelingVal: string, messages: Msg[]) {
     // if honeypot filled, quietly return a harmless response
     if ((websiteHp || "").trim()) {
       return {
@@ -121,6 +141,7 @@ export default function SpaceClarityTool() {
     fd.append("photo", file);
     fd.append("intention", intentionVal);
     fd.append("feeling", feelingVal);
+    fd.append("chat_history", JSON.stringify(messages));
 
     const resp = await fetch(`${apiBase}/api/analyze`, {
       method: "POST",
@@ -160,7 +181,9 @@ export default function SpaceClarityTool() {
     const iLabel = INTENTIONS.find((x) => x.value === intention)?.label ?? intention;
     const fLabel = FEELINGS.find((x) => x.value === feeling)?.label ?? feeling;
 
-    addMessage(`Photo uploaded.\nIntention: ${iLabel}\nFeeling: ${fLabel}`, "user");
+    const userMsg = `Photo uploaded.\nIntention: ${iLabel}\nFeeling: ${fLabel}`;
+    const updatedMessages = [...messages, { who: "user", text: userMsg } as Msg];
+    setMessages(updatedMessages);
 
     setBusy(true);
     setConnBadge("Working…");
@@ -171,7 +194,7 @@ export default function SpaceClarityTool() {
     setMessages((prev) => [...prev, { who: "bot", text: "Uploading and analyzing…", } as Msg]);
 
     try {
-      const result = await analyzeSpace(photo, intention, feeling);
+      const result = await analyzeSpace(photo, intention, feeling, updatedMessages);
 
       // remove the last thinking bubble (simple approach)
       setMessages((prev) => {
@@ -243,15 +266,57 @@ export default function SpaceClarityTool() {
     );
   }
 
-  function onSendChat() {
+  async function onSendChat() {
     const text = chatInput.trim();
-    if (!text) return;
-    addMessage(text, "user");
+    if (!text || busy) return;
+    const updatedMessages = [...messages, { who: "user", text } as Msg];
+    setMessages(updatedMessages);
     setChatInput("");
-    addMessage(
-      "Thank you — that helps.\n\nIf you’d like, upload a clearer angle (or a second photo) and I’ll generate a refined plan.",
-      "bot"
-    );
+
+    setBusy(true);
+    setConnBadge("Working…");
+
+    // show temporary thinking bubble
+    setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
+
+    try {
+      const result = await converse(updatedMessages);
+
+      // remove the last thinking bubble
+      setMessages((prev) => {
+        const copy = [...prev];
+        if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
+          copy.pop();
+        }
+        return copy;
+      });
+
+      const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
+      const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : [];
+
+      outMsgs.forEach((m) => addMessage(String(m), "bot"));
+      setPills(outPills);
+
+      setConnBadge("Ready");
+    } catch (err) {
+      console.error(err);
+
+      // replace thinking with error text
+      setMessages((prev) => {
+        const copy = [...prev];
+        if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
+          copy[copy.length - 1] =
+            { who: "bot", text: "I couldn’t respond right now. Try again or check your connection." };
+        } else {
+          copy.push({ who: "bot", text: "I couldn’t respond right now. Try again or check your connection." });
+        }
+        return copy;
+      });
+
+      setConnBadge("Check connection");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -377,9 +442,55 @@ export default function SpaceClarityTool() {
                   type="button"
                   style={styles.pill}
                   disabled={busy}
-                  onClick={() => {
-                    addMessage(p, "user");
-                    addMessage("Got it. If you’d like, add one detail below and I’ll tailor the next step.", "bot");
+                  onClick={async () => {
+                    if (busy) return;
+                    const updatedMessages = [...messages, { who: "user", text: p } as Msg];
+                    setMessages(updatedMessages);
+
+                    setBusy(true);
+                    setConnBadge("Working…");
+
+                    // show temporary thinking bubble
+                    setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
+
+                    try {
+                      const result = await converse(updatedMessages);
+
+                      // remove the last thinking bubble
+                      setMessages((prev) => {
+                        const copy = [...prev];
+                        if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
+                          copy.pop();
+                        }
+                        return copy;
+                      });
+
+                      const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
+                      const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : [];
+
+                      outMsgs.forEach((m) => addMessage(String(m), "bot"));
+                      setPills(outPills);
+
+                      setConnBadge("Ready");
+                    } catch (err) {
+                      console.error(err);
+
+                      // replace thinking with error text
+                      setMessages((prev) => {
+                        const copy = [...prev];
+                        if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
+                          copy[copy.length - 1] =
+                            { who: "bot", text: "I couldn’t respond right now. Try again or check your connection." };
+                        } else {
+                          copy.push({ who: "bot", text: "I couldn’t respond right now. Try again or check your connection." });
+                        }
+                        return copy;
+                      });
+
+                      setConnBadge("Check connection");
+                    } finally {
+                      setBusy(false);
+                    }
                   }}
                 >
                   {p}
