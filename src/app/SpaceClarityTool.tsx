@@ -129,10 +129,9 @@ export default function SpaceClarityTool() {
     // if honeypot filled, quietly return a harmless response
     if ((websiteHp || "").trim()) {
       return {
-        messages: [
-          "Thanks — I’ve got you.\n\nYour first 10-minute step: choose ONE small zone (one shelf, one drawer, one counter corner). Remove anything that obviously doesn’t belong, then put back only what supports that zone’s purpose.",
-        ],
-        quick_actions: [],
+        first_step: "Choose ONE small zone (one shelf, one drawer, or one counter corner). Remove anything that obviously doesn't belong.",
+        question: "What kind of space is this—kitchen, closet, bedroom, office, or something else?",
+        quick_actions: ["Kitchen", "Closet", "Bedroom", "Office"],
       };
     }
 
@@ -159,7 +158,7 @@ export default function SpaceClarityTool() {
       throw new Error(err.error || `Analyze failed (${resp.status}).`);
     }
 
-    return (await resp.json()) as { messages?: string[]; quick_actions?: string[] };
+    return (await resp.json()) as { first_step?: string; question?: string; quick_actions?: string[]; messages?: string[] };
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -206,11 +205,20 @@ export default function SpaceClarityTool() {
         return copy;
       });
 
-      const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 6) : [];
-      const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 6) : [];
-
-      outMsgs.forEach((m) => addMessage(String(m), "bot"));
-      setPills(outPills);
+      // Handle new format (first_step, question, quick_actions) or legacy format (messages, quick_actions)
+      if (result.first_step && result.question) {
+        // New format: first submission with first_step and question
+        addMessage(result.first_step, "bot");
+        addMessage(result.question, "bot");
+        const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 4) : [];
+        setPills(outPills);
+      } else if (result.messages) {
+        // Legacy format: follow-up photos with messages
+        const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 6) : [];
+        const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 6) : [];
+        outMsgs.forEach((m) => addMessage(String(m), "bot"));
+        setPills(outPills);
+      }
 
       addMessage(
         "If you want to tailor the next step, add one detail below (for example: what kind of space this is).",
