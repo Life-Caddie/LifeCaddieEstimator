@@ -180,7 +180,7 @@ export default function SpaceClarityTool() {
     const iLabel = GOALS.find((x) => x.value === goal)?.label ?? goal;
     const fLabel = FEELINGS.find((x) => x.value === feeling)?.label ?? feeling;
 
-    const userMsg = `Photo uploaded.\ngoal: ${iLabel}\nFeeling: ${fLabel}`;
+    const userMsg = `Photo uploaded.\nGoal: ${iLabel}\nFeeling: ${fLabel}`;
     const updatedMessages = [...messages, { who: "user", text: userMsg } as Msg];
     setMessages(updatedMessages);
 
