@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 
 type Msg = { who: "bot" | "user"; text: string };
 
-const INTENTIONS = [
+const GOALS = [
   { value: "moving", label: "Moving", sub: "Pack + decide what comes" },
   { value: "prepping_to_downsize", label: "Prepping to downsize", sub: "Right-size for next chapter" },
   { value: "reset", label: "Reset", sub: "Calm + functional refresh" },
@@ -26,7 +26,7 @@ function formatMB(bytes: number) {
 }
 
 export default function SpaceClarityTool() {
-  const [intention, setIntention] = useState<string>("");
+  const [goal, setgoal] = useState<string>("");
   const [feeling, setFeeling] = useState<string>("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
@@ -61,7 +61,7 @@ export default function SpaceClarityTool() {
       {
         who: "bot",
         text:
-          "Hi — I’m your Life Caddie.\n\nUpload a photo and tap the two options. I’ll give you a gentle first-step plan that matches your intention and how you’re feeling.",
+          "Hi — I’m your Life Caddie.\n\nUpload a photo and tap the two options. I’ll give you a gentle first-step plan that matches your goal and how you’re feeling.",
       },
     ]);
   }, []);
@@ -125,21 +125,20 @@ export default function SpaceClarityTool() {
     return (await resp.json()) as { messages?: string[]; quick_actions?: string[] };
   }
 
-  async function analyzeSpace(file: File, intentionVal: string, feelingVal: string, messages: Msg[]) {
+  async function analyzeSpace(file: File, goalVal: string, feelingVal: string, messages: Msg[]) {
     // if honeypot filled, quietly return a harmless response
     if ((websiteHp || "").trim()) {
       return {
-        messages: [
-          "Thanks — I’ve got you.\n\nYour first 10-minute step: choose ONE small zone (one shelf, one drawer, one counter corner). Remove anything that obviously doesn’t belong, then put back only what supports that zone’s purpose.",
-        ],
-        quick_actions: [],
+        first_step: "Choose ONE small zone (one shelf, one drawer, or one counter corner). Remove anything that obviously doesn't belong.",
+        question: "What kind of space is this—kitchen, closet, bedroom, office, or something else?",
+        quick_actions: ["Kitchen", "Closet", "Bedroom", "Office"],
       };
     }
 
     const token = await getSessionToken();
     const fd = new FormData();
     fd.append("photo", file);
-    fd.append("intention", intentionVal);
+    fd.append("goal", goalVal);
     fd.append("feeling", feelingVal);
     fd.append("chat_history", JSON.stringify(messages));
 
@@ -159,7 +158,7 @@ export default function SpaceClarityTool() {
       throw new Error(err.error || `Analyze failed (${resp.status}).`);
     }
 
-    return (await resp.json()) as { messages?: string[]; quick_actions?: string[] };
+    return (await resp.json()) as { first_step?: string; question?: string; quick_actions?: string[]; messages?: string[] };
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -169,8 +168,8 @@ export default function SpaceClarityTool() {
       addMessage("Please upload a photo first (any angle is fine).", "bot");
       return;
     }
-    if (!intention) {
-      addMessage("Please choose an intention (tap one of the options).", "bot");
+    if (!goal) {
+      addMessage("Please choose an goal (tap one of the options).", "bot");
       return;
     }
     if (!feeling) {
@@ -178,10 +177,10 @@ export default function SpaceClarityTool() {
       return;
     }
 
-    const iLabel = INTENTIONS.find((x) => x.value === intention)?.label ?? intention;
+    const iLabel = GOALS.find((x) => x.value === goal)?.label ?? goal;
     const fLabel = FEELINGS.find((x) => x.value === feeling)?.label ?? feeling;
 
-    const userMsg = `Photo uploaded.\nIntention: ${iLabel}\nFeeling: ${fLabel}`;
+    const userMsg = `Photo uploaded.\nGoal: ${iLabel}\nFeeling: ${fLabel}`;
     const updatedMessages = [...messages, { who: "user", text: userMsg } as Msg];
     setMessages(updatedMessages);
 
@@ -194,7 +193,7 @@ export default function SpaceClarityTool() {
     setMessages((prev) => [...prev, { who: "bot", text: "Uploading and analyzing…", } as Msg]);
 
     try {
-      const result = await analyzeSpace(photo, intention, feeling, updatedMessages);
+      const result = await analyzeSpace(photo, goal, feeling, updatedMessages);
 
       // remove the last thinking bubble (simple approach)
       setMessages((prev) => {
@@ -206,11 +205,20 @@ export default function SpaceClarityTool() {
         return copy;
       });
 
-      const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 6) : [];
-      const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 6) : [];
-
-      outMsgs.forEach((m) => addMessage(String(m), "bot"));
-      setPills(outPills);
+      // Handle new format (first_step, question, quick_actions) or legacy format (messages, quick_actions)
+      if (result.first_step && result.question) {
+        // New format: first submission with first_step and question
+        addMessage(result.first_step, "bot");
+        addMessage(result.question, "bot");
+        const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 4) : [];
+        setPills(outPills);
+      } else if (result.messages) {
+        // Legacy format: follow-up photos with messages
+        const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 6) : [];
+        const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 6) : [];
+        outMsgs.forEach((m) => addMessage(String(m), "bot"));
+        setPills(outPills);
+      }
 
       addMessage(
         "If you want to tailor the next step, add one detail below (for example: what kind of space this is).",
@@ -240,7 +248,7 @@ export default function SpaceClarityTool() {
   }
 
   function onReset() {
-    setIntention("");
+    setgoal("");
     setFeeling("");
     setPhoto(null);
     setPreviewUrl("");
@@ -254,7 +262,7 @@ export default function SpaceClarityTool() {
       {
         who: "bot",
         text:
-          "Hi — I’m your Life Caddie.\n\nUpload a photo and tap the two options. I’ll give you a gentle first-step plan that matches your intention and how you’re feeling.",
+          "Hi — I’m your Life Caddie.\n\nUpload a photo and tap the two options. I’ll give you a gentle first-step plan that matches your goal and how you’re feeling.",
       },
     ]);
   }
@@ -359,16 +367,16 @@ export default function SpaceClarityTool() {
 
               {imgWarn ? <div style={styles.warn}>{imgWarn}</div> : null}
 
-              <label style={styles.label}>1) Intention</label>
+              <label style={styles.label}>1) My goal for this space</label>
               <select
-                value={intention}
-                onChange={(e) => setIntention(e.target.value)}
+                value={goal}
+                onChange={(e) => setgoal(e.target.value)}
                 disabled={busy}
-                aria-label="Intention"
+                aria-label="goal"
                 style={styles.select}
               >
-                <option value="">Choose an intention</option>
-                {INTENTIONS.map((x) => (
+                <option value="">Choose a goal</option>
+                {GOALS.map((x) => (
                   <option key={x.value} value={x.value} title={x.sub}>
                     {x.label}
                   </option>

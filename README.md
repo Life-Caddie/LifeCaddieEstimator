@@ -31,7 +31,7 @@ LifeCaddieEstimator/
 	│   └── conversation/route.ts # Server API: issues OpenAI conversation flow
 	├── layout.tsx             # App layout for Next.js
 	├── page.tsx               # Root page
-	└── SpaceClarityTool.tsx   # Client UI: upload, intention/feeling inputs
+	└── SpaceClarityTool.tsx   # Client UI: upload, goal/feeling inputs
 ```
 ## Requirements
 

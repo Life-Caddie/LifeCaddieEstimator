@@ -66,7 +66,7 @@ async function verifySession(req: Request) {
   }
 }
 
-function isAllowedIntention(x: string) {
+function isAllowedGoal(x: string) {
   return ["moving", "prepping_to_downsize", "reset", "staging", "caregiving", "other"].includes(x);
 }
 function isAllowedFeeling(x: string) {
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
   try {
     const form = await req.formData();
 
-    const intention = String(form.get("intention") || "").trim();
+    const goal = String(form.get("goal") || "").trim();
     const feeling = String(form.get("feeling") || "").trim();
     const photo = form.get("photo");
     const chatHistoryRaw = String(form.get("chat_history") || "").trim();
@@ -110,15 +110,15 @@ export async function POST(req: Request) {
 
     const isFollowUp = Array.isArray(chatHistory) && chatHistory.filter(msg => msg.who === "user" && msg.text && msg.text.includes("Photo uploaded.")).length > 1;
 
-    if (!intention || !feeling || !photo) {
+    if (!goal || !feeling || !photo) {
       return NextResponse.json(
-        { error: "Missing required fields (photo, intention, feeling)." },
+        { error: "Missing required fields (photo, goal, feeling)." },
         { status: 400, headers: corsHeaders(origin) }
       );
     }
-    if (!isAllowedIntention(intention) || !isAllowedFeeling(feeling)) {
+    if (!isAllowedGoal(goal) || !isAllowedFeeling(feeling)) {
       return NextResponse.json(
-        { error: "Invalid intention or feeling value." },
+        { error: "Invalid goal or feeling value." },
         { status: 400, headers: corsHeaders(origin) }
       );
     }
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
 You are Life Caddie, a calm, non-judgmental downsizing & organizing guide.
 
 User inputs:
-- Intention: ${intention}
+- goal: ${goal}
 - Feeling: ${feeling}
 ${isFollowUp ? "- This is a follow-up photo to improve understanding or show progress in organizing the space." : ""}
 
@@ -162,14 +162,18 @@ Chat History:
 ${chatHistory.map((msg: { who: any; text: any; }) => `${msg.who}: ${msg.text}`).join('\n')}
 
 Return STRICT JSON ONLY:
-{
+${isFollowUp ? `{
   "messages": string[],       // 3–6 short chat bubbles
   "quick_actions": string[]   // 3–6 tappable labels
-}
+}` : `{
+  "first_step": string,       // Start with "Based on what I see..." or similar. Briefly describe the space/situation, then suggest ONE concrete 10-minute action with a short reason why (e.g., "...because it creates immediate relief and momentum")
+  "question": string,         // A clarifying question to get more context
+  "quick_actions": string[]   // 2–4 suggested tappable labels or quick responses
+}`}
 
 Rules:
 - Kind, no shame.
-- ${isFollowUp ? "Acknowledge progress and provide refined advice based on the new photo and history." : "Give a 10-minute first step."}
+${isFollowUp ? "- Acknowledge progress and provide refined advice based on the new photo and history." : "- first_step format: Start by acknowledging what you see (e.g., 'Based on what I see in your space...' or 'I notice...'), then provide ONE concrete, doable action that takes 10 minutes, then briefly explain why this helps (relief, momentum, focus, etc.).\n- question should help narrow down the next steps.\n- quick_actions can be quick answers to the question or alternative approaches."}
 - Avoid recommending buying products.
 - If safety hazards appear, mention gently.
 `.trim();
@@ -194,24 +198,43 @@ Rules:
     const raw = resp.output_text || "";
     const parsed = safeJsonParse(raw);
 
-    const messages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 6) : [];
-    const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 6) : [];
+    if (isFollowUp) {
+      const messages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 6) : [];
+      const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 6) : [];
 
-    if (!messages.length) {
-      return NextResponse.json(
-        {
-          messages: [
-            "Thanks — I’m here with you. Let’s take one gentle step that creates immediate relief.",
-            "Your first 10-minute step: choose ONE small zone (one shelf, one drawer, one counter corner). Remove anything that obviously doesn’t belong, then put back only what supports that zone’s purpose.",
-            "If you tell me what kind of space this is (kitchen/closet/office/etc.), I can outline the next 2–3 zones in a calm order."
-          ],
-          quick_actions: ["This is a kitchen", "This is a closet", "This is an office", "Help me pick a first zone"]
-        },
-        { headers: corsHeaders(origin) }
-      );
+      if (!messages.length) {
+        return NextResponse.json(
+          {
+            messages: [
+              "Thanks — I'm here with you. Let's take one gentle step that creates immediate relief.",
+              "Your first 10-minute step: choose ONE small zone (one shelf, one drawer, one counter corner). Remove anything that obviously doesn't belong, then put back only what supports that zone's purpose.",
+              "If you tell me what kind of space this is (kitchen/closet/office/etc.), I can outline the next 2–3 zones in a calm order."
+            ],
+            quick_actions: ["This is a kitchen", "This is a closet", "This is an office", "Help me pick a first zone"]
+          },
+          { headers: corsHeaders(origin) }
+        );
+      }
+
+      return NextResponse.json({ messages, quick_actions }, { headers: corsHeaders(origin) });
+    } else {
+      const first_step = parsed?.first_step || "";
+      const question = parsed?.question || "";
+      const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 4) : [];
+
+      if (!first_step || !question) {
+        return NextResponse.json(
+          {
+            first_step: "Choose ONE small zone (one shelf, one drawer, or one counter corner). Remove anything that obviously doesn't belong.",
+            question: "What kind of space is this—kitchen, closet, bedroom, office, or something else?",
+            quick_actions: ["Kitchen", "Closet", "Bedroom", "Office"]
+          },
+          { headers: corsHeaders(origin) }
+        );
+      }
+
+      return NextResponse.json({ first_step, question, quick_actions }, { headers: corsHeaders(origin) });
     }
-
-    return NextResponse.json({ messages, quick_actions }, { headers: corsHeaders(origin) });
   } catch (err) {
     console.error("analyze route error:", err);
     return NextResponse.json(
