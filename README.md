@@ -1,79 +1,158 @@
 # Life Caddie Estimator App
 
-An early-stage AI project focused on building a fully-functioning **image-recognition application** capable of generating **organizing estimates** from photos of cluttered rooms. The long-term goal is to use computer vision and AI reasoning to help users quickly evaluate how much time, effort, or professional assistance may be needed to organize a space.
+An AI-powered application designed to help users quickly evaluate organization efforts by analyzing photos of cluttered rooms. The application uses computer vision and AI reasoning to provide personalized organization estimates based on images, user goals, and emotional context.
 
-Planned future capabilities:
+## Core Features
 
-* Accepting image inputs (JPEG/PNG) --added spaceClarityTool
-  -Need to decide on file storade/retention method.
-* Detecting clutter types, objects, and layout information
-* Estimating organization effort, time, and resource requirements
-* Exporting structured summaries or reports
-* Providing optional visual overlays or heatmaps for clutter
+* **Space Clarity Tool** — Interactive UI for uploading images and capturing user goals/feelings
+* **Image Analysis** — AI-powered image recognition to assess clutter types and space layout
+* **Organization Estimates** — Generates time, effort, and resource requirement assessments
+* **Session Management** — Secure JWT-based session handling for API requests
+* **Conversation Flow** — Multi-turn conversation interface for refined estimates
+* **CORS Support** — Cross-origin request handling for web integration
 
-## 📁 Project Structure (current)
+## Project Structure
 
 ```
 LifeCaddieEstimator/
-├── ExperimentalEstimator # Experimental Python estimator script
-├── .gitignore			  # Files to be ignored by Git version control
-├── next-env.d.ts         # Next.js env build
-├── next.config.mjs       # Next.js configuration
-├── package-lock.json     # Exact installed JS deps
-├── package.json          # Frontend deps, scripts
-├── README.md             # Project documentation (this file)
-├── requirements.txt      # Python dependencies
-├── tsconfig.json         # TypeScript config for frontend
-└── src/app/
-	├── api/
-	│   ├── analyze/route.ts   # Server API: receives uploads, calls
-	│   ├── session/route.ts   # Server API: issues short-lived OpenAI
-	│   └── conversation/route.ts # Server API: issues OpenAI conversation flow
-	├── layout.tsx             # App layout for Next.js
-	├── page.tsx               # Root page
-	└── SpaceClarityTool.tsx   # Client UI: upload, goal/feeling inputs
+├── ExperimentalEstimator/     # Experimental Python estimator module
+├── src/
+│   └── app/
+│       ├── api/
+│       │   ├── toolkit.ts              # Shared API utilities
+│       │   ├── analyze/route.ts        # POST /api/analyze - Image analysis endpoint
+│       │   ├── conversation/route.ts   # POST /api/conversation - Conversation endpoint
+│       │   └── session/route.ts        # POST /api/session - Session token generation
+│       ├── layout.tsx                  # Next.js root layout
+│       ├── page.tsx                    # Home page
+│       └── SpaceClarityTool.tsx        # Main client component (image upload, UI)
+├── .gitignore                 # Git ignore rules
+├── next-env.d.ts              # Next.js TypeScript definitions
+├── next.config.mjs            # Next.js configuration
+├── package.json               # Node.js dependencies and scripts
+├── package-lock.json          # Locked dependency versions
+├── README.md                  # Project documentation
+├── requirements.txt           # Python dependencies
+└── tsconfig.json              # TypeScript configuration
 ```
+## Technology Stack
+
+* **Frontend**: Next.js 14, React 18, TypeScript
+* **Backend**: Next.js API Routes
+* **Authentication**: JWT (JSON Web Tokens) via jose
+* **AI Integration**: OpenAI API
+* **Python**: Optional experimental estimator module
+* **Build**: TypeScript, ESM modules
+
 ## Requirements
 
-* Python 3.12+ for any Python components
-* Node.js (LTS, v18+ recommended) and `npm` for the Next.js frontend
-* OpenAI API key
+* **Node.js**: v18+ (LTS recommended)
+* **npm**: Included with Node.js
+* **OpenAI API Key**: Required for AI functionality
+* **Python 3.12+** (optional): Only needed for experimental Python estimator
 
-## Getting started
+## 🚀 Getting Started
 
-1. Clone the repository:
+### 1. Clone the Repository
 
 ```bash
 git clone <REPOSITORY_URL>
-cd <REPOSITORY_NAME>
+cd LifeCaddieEstimator
 ```
 
-2. Python (optional): install Python deps if you plan to use `estimator.py`:
+### 2. Install Frontend Dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+
+Create a `.env.local` file in the project root (do not commit):
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+LC_SESSION_JWT_SECRET=your_32_character_secret_key_here
+OPENAI_MODEL=gpt-4-mini
+```
+
+**Required variables:**
+- `OPENAI_API_KEY` — Your OpenAI API key for image analysis and conversation
+- `LC_SESSION_JWT_SECRET` — 32+ character secret for signing JWT session tokens
+
+**Optional variables:**
+- `OPENAI_MODEL` — Override the default model (defaults to `gpt-4-mini`)
+
+### 4. Run the Development Server
+
+```bash
+npm run dev
+```
+
+The application will be available at [http://localhost:3000](http://localhost:3000)
+
+### 5. Python Setup (Optional)
+
+If you want to work with the experimental Python estimator:
 
 ```bash
 python -m venv venv
+# Activate virtual environment:
 # Windows: venv\Scripts\activate
 # macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Frontend (Next.js): install and run the dev server
+## API Endpoints
 
-```powershell
-npm install
-npm run dev
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/session` | POST | Generate a JWT session token |
+| `/api/analyze` | POST | Submit image and receive clutter analysis |
+| `/api/conversation` | POST | Continue multi-turn conversation for refined estimates |
+
+All API endpoints support CORS for the following origins:
+- `http://localhost:3000` (development)
+- `https://lifecaddie.org` (production)
+- `https://www.lifecaddie.org` (production)
+
+## Data Handling
+
+- **Image uploads** are processed in-memory and converted to base64 data URLs
+- Images are **not persisted** to disk by default
+- All API requests require a valid JWT session token
+- Session tokens are short-lived and issued via `/api/session`
+
+## 🏗️ Building for Production
+
+```bash
+npm run build
+npm start
 ```
 
-The app runs at http://localhost:3000 by default.
+The app will run on port 3000 (configurable via environment).
 
-## Environment variables
+## Project Dependencies
 
-Create a `.env` (do not commit) with at least:
+### Frontend (Node.js)
+- **next** (^14.2.0) — React framework
+- **react** (^18.2.0) — UI library
+- **react-dom** (^18.2.0) — React DOM rendering
+- **openai** (^4.0.0) — OpenAI API client
+- **jose** (^5.9.0) — JWT token handling
+- **typescript** (5.9.3) — Type safety
 
-- `API_KEY` — your OpenAI API key (required)
-- `LC_SESSION_JWT_SECRET` — 32+ character secret used to sign session tokens (required for `/api/session`/upload)
-- `OPENAI_MODEL` — optional model override (defaults to `gpt-4.1-mini` in code)
+### Python (Optional)
+See `requirements.txt` for experimental estimator dependencies.
 
-## Uploads
+## Future Enhancements
 
-- Currently, uploaded photos are processed in memory and converted to a base64 data URL; they are NOT written to disk or persisted by default.
+* DB integration for user retention and company projects
+* Export estimates as structured reports
+* Integration with professional organizing services
+* Advanced caching and session persistence
+* Mobile app version
+
+## 📄 License
+
+See LICENSE file for details.
