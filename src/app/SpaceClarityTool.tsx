@@ -66,13 +66,11 @@ export default function SpaceClarityTool() {
     ]);
   }, []);
 
-  // autoscroll chat
   useEffect(() => {
     if (!chatlogRef.current) return;
     chatlogRef.current.scrollTop = chatlogRef.current.scrollHeight;
   }, [messages, pills]);
 
-  // manage preview URL lifecycle
   useEffect(() => {
     if (!photo) {
       setPreviewUrl("");
@@ -189,23 +187,19 @@ export default function SpaceClarityTool() {
     setPills([]);
     const thinkingId = crypto.randomUUID();
 
-    // show temporary thinking bubble
     setMessages((prev) => [...prev, { who: "bot", text: "Uploading and analyzing…", } as Msg]);
 
     try {
       const result = await analyzeSpace(photo, goal, feeling, updatedMessages);
 
-      // remove the last thinking bubble (simple approach)
       setMessages((prev) => {
         const copy = [...prev];
-        // remove last message if it's the thinking text
         if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Uploading and analyzing…") {
           copy.pop();
         }
         return copy;
       });
 
-      // Handle response with task and follow_up_question
       if (result.task && result.follow_up_question) {
         addMessage(result.task, "bot");
         addMessage(result.follow_up_question, "bot");
@@ -272,13 +266,11 @@ export default function SpaceClarityTool() {
     setBusy(true);
     setConnBadge("Working…");
 
-    // show temporary thinking bubble
     setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
 
     try {
       const result = await converse(updatedMessages);
 
-      // remove the last thinking bubble
       setMessages((prev) => {
         const copy = [...prev];
         if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
@@ -297,7 +289,6 @@ export default function SpaceClarityTool() {
     } catch (err) {
       console.error(err);
 
-      // replace thinking with error text
       setMessages((prev) => {
         const copy = [...prev];
         if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
@@ -318,7 +309,6 @@ export default function SpaceClarityTool() {
   return (
     <div style={styles.wrap}>
       <div style={styles.grid}>
-        {/* LEFT: intake */}
         <div style={styles.card}>
           <div style={styles.cardHeader}>
             <h2 style={styles.h2}>Upload + 2 quick questions</h2>
@@ -409,7 +399,6 @@ export default function SpaceClarityTool() {
           </div>
         </div>
 
-        {/* RIGHT: chat */}
         <div style={{ ...styles.card, background: "#f6f7f9" }}>
           <div style={styles.cardHeader}>
             <h2 style={styles.h2}>Your Life Caddie Plan</h2>
@@ -446,13 +435,11 @@ export default function SpaceClarityTool() {
                     setBusy(true);
                     setConnBadge("Working…");
 
-                    // show temporary thinking bubble
                     setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
 
                     try {
                       const result = await converse(updatedMessages);
 
-                      // remove the last thinking bubble
                       setMessages((prev) => {
                         const copy = [...prev];
                         if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
@@ -471,7 +458,6 @@ export default function SpaceClarityTool() {
                     } catch (err) {
                       console.error(err);
 
-                      // replace thinking with error text
                       setMessages((prev) => {
                         const copy = [...prev];
                         if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
@@ -594,13 +580,9 @@ const styles: Record<string, React.CSSProperties> = {
 if (typeof window !== "undefined") {
   const mq = window.matchMedia("(max-width: 920px)");
   const apply = () => {
-    // @ts-ignore
     styles.grid.gridTemplateColumns = mq.matches ? "1fr" : "1fr 1.15fr";
-    // @ts-ignore
     styles.chatlog.height = mq.matches ? 420 : 540;
-    // @ts-ignore
     styles.choiceGrid.gridTemplateColumns = window.matchMedia("(max-width: 420px)").matches ? "1fr" : "1fr 1fr";
-    // @ts-ignore
     styles.rowBtns.gridTemplateColumns = window.matchMedia("(max-width: 420px)").matches ? "1fr" : "1fr 1fr";
   };
   apply();
