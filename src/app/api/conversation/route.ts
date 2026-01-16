@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { corsHeaders, handleOPTIONS, verifySession, safeJsonParse } from "../sessionBuilder";
+import { corsHeaders, handleOPTIONS, verifySession, safeJsonParse } from "../toolkit";
 import { getConversationInstructions } from "./toneBuilder";
 
 export const runtime = "nodejs";
