@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { corsHeaders, handleOPTIONS, verifySession, safeJsonParse } from "../toolkit";
+import { uploadImage } from "../../../lib/azureStorage";
 
 export const runtime = "nodejs";
 
@@ -76,6 +77,23 @@ export async function POST(req: Request) {
     const base64 = Buffer.from(arrayBuffer).toString("base64");
     const dataUrl = `data:${mime};base64,${base64}`;
 
+    // Optionally store the raw uploaded image to Azure Blob Storage
+    const container = process.env.AZURE_UPLOAD_CONTAINER;
+    if (container) {
+      try {
+        const blobName = `${Date.now()}-${crypto.randomUUID()}-${(photo as File).name}`;
+        const buf = Buffer.from(arrayBuffer);
+        const stored = await uploadImage(container, blobName, buf, mime);
+        // attach stored URL to the response payload (non-breaking addition)
+        // we'll add it to the success fallback below if parsing fails; otherwise include in JSON response
+        // temporarily store on req local var (we'll include later)
+        // @ts-ignore
+        (req as any)._stored_photo_url = stored.url;
+      } catch (err) {
+        console.error("azure upload failed:", err);
+      }
+    }
+
     const instructions = `
 You are Life Caddie, a calm, non-judgmental downsizing & organizing guide.
 
@@ -122,22 +140,24 @@ Rules:
     const raw = resp.output_text || "";
     const parsed = safeJsonParse(raw);
 
-    const task = parsed?.task || "";
-    const follow_up_question = parsed?.follow_up_question || "";
-    const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 4) : [];
+    const messages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 6) : [];
+    const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 6) : [];
 
-    if (!task || !follow_up_question) {
+    if (!messages.length) {
       return NextResponse.json(
         {
-          task: "Choose ONE small zone (one shelf, one drawer, or one counter corner). Remove anything that obviously doesn't belong.",
-          follow_up_question: "What kind of space is this—kitchen, closet, bedroom, office, or something else?",
-          quick_actions: ["Kitchen", "Closet", "Bedroom", "Office"]
+          messages: [
+            "Thanks — I’m here with you. Let’s take one gentle step that creates immediate relief.",
+            "Your first 10-minute step: choose ONE small zone (one shelf, one drawer, one counter corner). Remove anything that obviously doesn’t belong, then put back only what supports that zone’s purpose.",
+            "If you tell me what kind of space this is (kitchen/closet/office/etc.), I can outline the next 2–3 zones in a calm order."
+          ],
+          quick_actions: ["This is a kitchen", "This is a closet", "This is an office", "Help me pick a first zone"]
         },
         { headers: corsHeaders(origin) }
       );
     }
 
-    return NextResponse.json({ task, follow_up_question, quick_actions }, { headers: corsHeaders(origin) });
+    return NextResponse.json({ messages, quick_actions }, { headers: corsHeaders(origin) });
   } catch (err) {
     console.error("analyze route error:", err);
     return NextResponse.json(
