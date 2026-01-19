@@ -1,6 +1,32 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
+import { UserMenu } from "../components/auth/UserMenu";
+import { supabaseBrowser } from "./lib/supabase/browser";
+
+const supabase = {
+  auth: {
+    // Minimal client-side fallback to avoid requiring ../lib/supabaseClient during build.
+    // This attempts a simple redirect if a redirect URL is provided; adjust to your auth flow.
+    signInWithOAuth: async ({ provider, options }: { provider: string; options?: { redirectTo?: string } }) => {
+      if (typeof window === "undefined") {
+        return { error: new Error("Supabase auth unavailable on server") };
+      }
+      try {
+        if (options?.redirectTo) {
+          window.location.href = options.redirectTo;
+        } else {
+          // Fallback: navigate to root (replace with your auth entry if available)
+          window.location.href = window.location.origin;
+        }
+        return { error: null };
+      } catch (err) {
+        return { error: err as Error };
+      }
+    },
+  },
+};
 
 type Msg = { who: "bot" | "user"; text: string };
 
@@ -39,6 +65,7 @@ export default function SpaceClarityTool() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [pills, setPills] = useState<string[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   // honeypot: bots sometimes fill hidden fields
   const [websiteHp, setWebsiteHp] = useState("");
@@ -95,7 +122,22 @@ export default function SpaceClarityTool() {
     return () => URL.revokeObjectURL(url);
   }, [photo]);
 
-  async function getSessionToken() {
+  // Track auth state to show UserMenu vs Sign-in button
+  useEffect(() => {
+    const supabase = supabaseBrowser();
+
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email ?? null);
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user?.email ?? null);
+    });
+
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+ async function getSessionToken() {
     const r = await fetch(`${apiBase}/api/session`, { method: "GET" });
     if (!r.ok) throw new Error("Session token request failed");
     const data = await r.json();
@@ -182,6 +224,7 @@ export default function SpaceClarityTool() {
     const updatedMessages = [...messages, { who: "user", text: userMsg } as Msg];
     setMessages(updatedMessages);
 
+
     setBusy(true);
     setConnBadge("Working…");
     setPills([]);
@@ -207,6 +250,7 @@ export default function SpaceClarityTool() {
         setPills(outPills);
       }
 
+  
       setConnBadge("Ready");
     } catch (err) {
       console.error(err);
@@ -312,7 +356,9 @@ export default function SpaceClarityTool() {
         <div style={styles.card}>
           <div style={styles.cardHeader}>
             <h2 style={styles.h2}>Upload + 2 quick questions</h2>
-            <span style={styles.badge}>Anonymous to start</span>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              {userEmail ? <UserMenu /> : <GoogleSignInButton />}
+            </div>
           </div>
 
           <div style={styles.cardBody}>
