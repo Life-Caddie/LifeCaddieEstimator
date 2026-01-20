@@ -9,8 +9,12 @@
     "start": "next start -p 3000"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@azure/identity": "^4.13.0",
     "@azure/storage-blob": "^12.29.1",
+=======
+    "@supabase/supabase-js": "^2.90.1",
+>>>>>>> dffd67ae792f030e6169a29c2674b8ed310f6f89
     "jose": "^5.9.0",
     "next": "^14.2.0",
     "openai": "^4.0.0",
