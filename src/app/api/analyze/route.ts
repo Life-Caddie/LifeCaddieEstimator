@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     const dataUrl = `data:${mime};base64,${base64}`;
 
     // Optionally store the raw uploaded image to Azure Blob Storage
-    const container = process.env.AZURE_UPLOAD_CONTAINER;
+    const container = process.env.AZURE_STORAGE_CONTAINER_IMAGES;
     if (container) {
       try {
         const blobName = `${Date.now()}-${crypto.randomUUID()}-${(photo as File).name}`;
@@ -140,10 +140,11 @@ Rules:
     const raw = resp.output_text || "";
     const parsed = safeJsonParse(raw);
 
-    const messages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 6) : [];
-    const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 6) : [];
+    const task = parsed?.task || "";
+    const follow_up_question = parsed?.follow_up_question || "";
+    const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 4) : [];
 
-    if (!messages.length) {
+    if (!task || !follow_up_question) {
       return NextResponse.json(
         {
           messages: [
@@ -157,7 +158,7 @@ Rules:
       );
     }
 
-    return NextResponse.json({ messages, quick_actions }, { headers: corsHeaders(origin) });
+    return NextResponse.json({ task, follow_up_question, quick_actions }, { headers: corsHeaders(origin) });
   } catch (err) {
     console.error("analyze route error:", err);
     return NextResponse.json(
