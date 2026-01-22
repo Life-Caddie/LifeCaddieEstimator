@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 import { UserMenu } from "../components/auth/UserMenu";
-import { supabaseBrowser } from "./lib/supabase/browser";
+import { supabaseBrowser } from "../lib/supabase/browser";
 
 const supabase = {
   auth: {
@@ -171,7 +171,6 @@ export default function SpaceClarityTool() {
       return {
         task: "Choose ONE small zone (one shelf, one drawer, or one counter corner). Remove anything that obviously doesn't belong.",
         follow_up_question: "What kind of space is this—kitchen, closet, bedroom, office, or something else?",
-        quick_actions: ["Kitchen", "Closet", "Bedroom", "Office"],
       };
     }
 
@@ -198,7 +197,7 @@ export default function SpaceClarityTool() {
       throw new Error(err.error || `Analyze failed (${resp.status}).`);
     }
 
-    return (await resp.json()) as { task?: string; follow_up_question?: string; quick_actions?: string[] };
+    return (await resp.json()) as { task?: string; follow_up_question?: string };
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -246,8 +245,6 @@ export default function SpaceClarityTool() {
       if (result.task && result.follow_up_question) {
         addMessage(result.task, "bot");
         addMessage(result.follow_up_question, "bot");
-        const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 4) : [];
-        setPills(outPills);
       }
 
   

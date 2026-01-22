@@ -107,17 +107,16 @@ ${chatHistory.map((msg: { who: any; text: any; }) => `${msg.who}: ${msg.text}`).
 Return STRICT JSON ONLY:
 {
   "task": string, // 3-4 sentances
-  "follow_up_question": string, // 1-2 sentances
-  "quick_actions": string[] // 1–3 suggested tappable labels or quick responses
+  "follow_up_question": string // 1-2 sentances
 }
 
 Rules:
 - Kind, no shame.
-- task should start with and a sentance to validate the users feelings.
-- ask questions about their situation (are there other rooms? Do you have help? ect)
-- quick_actions can be quick answers to the question or alternative approaches.
+- Should start with and a sentance to validate the users feelings.
 - Avoid recommending buying products.
 - If safety hazards appear, mention gently.
+- Gently provide a quick task the user could do, based on the provided image.
+- Questions should be about the client, and their goal holistically.
 `.trim();
 
     const resp = await openai.responses.create({
@@ -142,7 +141,6 @@ Rules:
 
     const task = parsed?.task || "";
     const follow_up_question = parsed?.follow_up_question || "";
-    const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 4) : [];
 
     if (!task || !follow_up_question) {
       return NextResponse.json(
@@ -151,14 +149,13 @@ Rules:
             "Thanks — I’m here with you. Let’s take one gentle step that creates immediate relief.",
             "Your first 10-minute step: choose ONE small zone (one shelf, one drawer, one counter corner). Remove anything that obviously doesn’t belong, then put back only what supports that zone’s purpose.",
             "If you tell me what kind of space this is (kitchen/closet/office/etc.), I can outline the next 2–3 zones in a calm order."
-          ],
-          quick_actions: ["This is a kitchen", "This is a closet", "This is an office", "Help me pick a first zone"]
+          ]
         },
         { headers: corsHeaders(origin) }
       );
     }
 
-    return NextResponse.json({ task, follow_up_question, quick_actions }, { headers: corsHeaders(origin) });
+    return NextResponse.json({ task, follow_up_question }, { headers: corsHeaders(origin) });
   } catch (err) {
     console.error("analyze route error:", err);
     return NextResponse.json(
