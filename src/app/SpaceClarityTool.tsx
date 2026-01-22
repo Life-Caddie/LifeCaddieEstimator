@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 import { UserMenu } from "../components/auth/UserMenu";
-import { supabaseBrowser } from "./lib/supabase/browser";
+import { supabaseBrowser } from "../lib/supabase/browser";
 
 const supabase = {
   auth: {

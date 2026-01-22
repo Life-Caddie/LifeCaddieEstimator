@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabaseBrowser } from "../../app/lib/supabase/browser";
+import { supabaseBrowser } from "../../lib/supabase/browser";
 
 export function UserMenu() {
   const [email, setEmail] = useState<string | null>(null);
