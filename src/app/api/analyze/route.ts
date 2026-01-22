@@ -112,10 +112,11 @@ Return STRICT JSON ONLY:
 
 Rules:
 - Kind, no shame.
-- task should start with and a sentance to validate the users feelings.
-- ask questions about their situation (are there other rooms? Do you have help? ect)
+- Should start with and a sentance to validate the users feelings.
 - Avoid recommending buying products.
 - If safety hazards appear, mention gently.
+- Gently provide a quick task the user could do, based on the provided image.
+- Questions should be about the client, and their goal holistically.
 `.trim();
 
     const resp = await openai.responses.create({
