@@ -36,7 +36,9 @@ export async function POST(req: Request) {
     }
 
     const userMessages = chatHistory.filter((msg: any) => msg.who === "user").length;
-    const instructions = getConversationInstructions(chatHistory, userMessages);
+    
+    // Get initial response to check if context has been gathered
+    let instructions = getConversationInstructions(chatHistory, userMessages);
 
     const resp = await openai.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
@@ -58,6 +60,7 @@ export async function POST(req: Request) {
 
     const messages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 3) : [];
     const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 3) : [];
+    const context_gathered = typeof parsed?.context_gathered === "boolean" ? parsed.context_gathered : undefined;
 
     if (!messages.length) {
       return NextResponse.json(
