@@ -60,7 +60,6 @@ export async function POST(req: Request) {
 
     const messages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 3) : [];
     const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 3) : [];
-    const context_gathered = typeof parsed?.context_gathered === "boolean" ? parsed.context_gathered : undefined;
 
     if (!messages.length) {
       return NextResponse.json(
