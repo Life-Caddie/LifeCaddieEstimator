@@ -32,13 +32,14 @@ const services = `
 
 export function getConversationInstructions(
   chatHistory: any[],
-  userMessageCount: number
+  userMessageCount: number,
+  contextGathered: boolean
 ): string {
   const chatHistoryFormatted = chatHistory
     .map((msg: any) => `${msg.who}: ${msg.text}`)
     .join("\n");
 
-  const isSecondUserMessage = userMessageCount > 2;
+  const isSecondUserMessage = userMessageCount > 3 || contextGathered;
   if (isSecondUserMessage) {
     return getRecommendationInstructions(chatHistoryFormatted);
   } else {
@@ -60,9 +61,9 @@ ${chatHistoryFormatted}
 
 Return STRICT JSON ONLY:
 {
-  "messages": string[],       // 1-3 short chat bubbles for the response
-  "quick_actions": string[]   // 0-3 optional tappable labels
-}
+  "messages": string[],           // 1-3 short chat bubbles for the response
+  "quick_actions": string[],      // 0-3 optional tappable labels
+  "context_gathered": boolean
 
 Rules:
 - Kind, no shame.
@@ -92,8 +93,9 @@ ${chatHistoryFormatted}
 
 Return STRICT JSON ONLY:
 {
-  "messages": string[],       // 1 medium length paragraph, suggesting 1 service
-  "quick_actions": string[]   // 0-3 optional tappable labels (e.g., "Schedule Assessment", "Learn More")
+  "messages": string[],           // 1 medium length paragraph, suggesting 1 service
+  "quick_actions": string[],      // 0-3 optional tappable labels (e.g., "Schedule Assessment", "Learn More")
+  "context_gathered": boolean     // true when context is gathered and recommendation is being provided
 }
 
 Rules:

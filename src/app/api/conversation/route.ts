@@ -36,9 +36,11 @@ export async function POST(req: Request) {
     }
 
     const userMessages = chatHistory.filter((msg: any) => msg.who === "user").length;
+    const contextGatheredRaw = String(form.get("context_gathered") || "false").trim();
+    const contextGathered = contextGatheredRaw === "true";
     
     // Get initial response to check if context has been gathered
-    let instructions = getConversationInstructions(chatHistory, userMessages);
+    let instructions = getConversationInstructions(chatHistory, userMessages, contextGathered);
 
     const resp = await openai.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
@@ -60,6 +62,7 @@ export async function POST(req: Request) {
 
     const messages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 3) : [];
     const quick_actions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 3) : [];
+    const context_gathered = typeof parsed?.context_gathered === "boolean" ? parsed.context_gathered : false;
 
     if (!messages.length) {
       return NextResponse.json(
@@ -67,13 +70,14 @@ export async function POST(req: Request) {
           messages: [
             "Thanks for sharing that. I'm here to help with your organizing journey."
           ],
-          quick_actions: []
+          quick_actions: [],
+          context_gathered: false
         },
         { headers: corsHeaders(origin) }
       );
     }
 
-    return NextResponse.json({ messages, quick_actions }, { headers: corsHeaders(origin) });
+    return NextResponse.json({ messages, quick_actions, context_gathered }, { headers: corsHeaders(origin) });
   } catch (err) {
     console.error("conversation route error:", err);
     return NextResponse.json(

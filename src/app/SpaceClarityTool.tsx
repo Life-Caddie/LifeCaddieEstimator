@@ -66,6 +66,7 @@ export default function SpaceClarityTool() {
   const [pills, setPills] = useState<string[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [context_gathered, setContext_gathered] = useState(false);
 
   // honeypot: bots sometimes fill hidden fields
   const [websiteHp, setWebsiteHp] = useState("");
@@ -145,10 +146,11 @@ export default function SpaceClarityTool() {
     return data.token as string;
   }
 
-  async function converse(messages: Msg[]) {
+  async function converse(messages: Msg[], contextGathered: boolean) {
     const token = await getSessionToken();
     const fd = new FormData();
     fd.append("chat_history", JSON.stringify(messages));
+    fd.append("context_gathered", String(contextGathered));
 
     const resp = await fetch(`${apiBase}/api/conversation`, {
       method: "POST",
@@ -162,7 +164,7 @@ export default function SpaceClarityTool() {
       throw new Error(err.error || `Conversation failed (${resp.status}).`);
     }
 
-    return (await resp.json()) as { messages?: string[]; quick_actions?: string[] };
+    return (await resp.json()) as { messages?: string[]; quick_actions?: string[]; context_gathered?: boolean };
   }
 
   async function analyzeSpace(file: File, goalVal: string, feelingVal: string, messages: Msg[]) {
@@ -310,7 +312,7 @@ export default function SpaceClarityTool() {
     setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
 
     try {
-      const result = await converse(updatedMessages);
+      const result = await converse(updatedMessages, context_gathered);
 
       setMessages((prev) => {
         const copy = [...prev];
@@ -322,9 +324,11 @@ export default function SpaceClarityTool() {
 
       const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
       const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : [];
+      const outContextGathered = typeof result.context_gathered === "boolean" ? result.context_gathered : false;
 
       outMsgs.forEach((m) => addMessage(String(m), "bot"));
       setPills(outPills);
+      setContext_gathered(outContextGathered);
 
       setConnBadge("Ready");
     } catch (err) {
@@ -481,7 +485,7 @@ export default function SpaceClarityTool() {
                     setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
 
                     try {
-                      const result = await converse(updatedMessages);
+                      const result = await converse(updatedMessages, context_gathered);
 
                       setMessages((prev) => {
                         const copy = [...prev];
@@ -493,9 +497,11 @@ export default function SpaceClarityTool() {
 
                       const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
                       const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : [];
+                      const outContextGathered = typeof result.context_gathered === "boolean" ? result.context_gathered : false;
 
                       outMsgs.forEach((m) => addMessage(String(m), "bot"));
                       setPills(outPills);
+                      setContext_gathered(outContextGathered);
 
                       setConnBadge("Ready");
                     } catch (err) {
