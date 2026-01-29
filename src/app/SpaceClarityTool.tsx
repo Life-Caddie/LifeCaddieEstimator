@@ -327,7 +327,11 @@ export default function SpaceClarityTool() {
       const outContextGathered = typeof result.context_gathered === "boolean" ? result.context_gathered : false;
 
       outMsgs.forEach((m) => addMessage(String(m), "bot"));
-      setPills(outPills);
+      if (outContextGathered) {
+        setPills(["schedule_meeting", "learn_more"]);
+      } else {
+        setPills(outPills);
+      }
       setContext_gathered(outContextGathered);
 
       setConnBadge("Ready");
@@ -500,7 +504,11 @@ export default function SpaceClarityTool() {
                       const outContextGathered = typeof result.context_gathered === "boolean" ? result.context_gathered : false;
 
                       outMsgs.forEach((m) => addMessage(String(m), "bot"));
-                      setPills(outPills);
+                      if (outContextGathered) {
+                        setPills(["schedule_meeting", "learn_more"]);
+                      } else {
+                        setPills(outPills);
+                      }
                       setContext_gathered(outContextGathered);
 
                       setConnBadge("Ready");
