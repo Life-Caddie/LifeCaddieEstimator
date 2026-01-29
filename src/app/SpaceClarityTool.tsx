@@ -487,7 +487,7 @@ export default function SpaceClarityTool() {
                     disabled={busy}
                     onClick={() => {
                       if (busy) return;
-                      window.open("https://en.wikipedia.org/wiki/Apple", "_blank", "noopener");
+                      window.open("https://www.lifecaddie.org/new-services-for-successful-and-amazing-results/", "_blank", "noopener");
                     }}
                   >
                     Learn more
