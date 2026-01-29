@@ -472,69 +472,97 @@ export default function SpaceClarityTool() {
 
           {pills.length ? (
             <div style={styles.pillRow}>
-              {pills.map((p, i) => (
-                <button
-                  key={`${p}-${i}`}
-                  type="button"
-                  style={styles.pill}
-                  disabled={busy}
-                  onClick={async () => {
-                    if (busy) return;
-                    const updatedMessages = [...messages, { who: "user", text: p } as Msg];
-                    setMessages(updatedMessages);
+              {pills.length === 2 && pills[0] === "schedule_meeting" && pills[1] === "learn_more" ? (
+                <>
+                  <button
+                    type="button"
+                    style={styles.pill}
+                    disabled={busy}
+                    onClick={() => {
+                      if (busy) return;
+                      window.open("https://en.wikipedia.org/wiki/Turtle", "_blank", "noopener");
+                    }}
+                  >
+                    Schedule meeting
+                  </button>
 
-                    setBusy(true);
-                    setConnBadge("Working…");
+                  <button
+                    type="button"
+                    style={styles.pill}
+                    disabled={busy}
+                    onClick={() => {
+                      if (busy) return;
+                      window.open("https://en.wikipedia.org/wiki/Apple", "_blank", "noopener");
+                    }}
+                  >
+                    Learn more
+                  </button>
+                </>
+              ) : (
+                pills.map((p, i) => (
+                  <button
+                    key={`${p}-${i}`}
+                    type="button"
+                    style={styles.pill}
+                    disabled={busy}
+                    onClick={async () => {
+                      if (busy) return;
+                      const updatedMessages = [...messages, { who: "user", text: p } as Msg];
+                      setMessages(updatedMessages);
 
-                    setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
+                      setBusy(true);
+                      setConnBadge("Working…");
 
-                    try {
-                      const result = await converse(updatedMessages, context_gathered);
+                      setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
 
-                      setMessages((prev) => {
-                        const copy = [...prev];
-                        if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
-                          copy.pop();
-                        }
-                        return copy;
-                      });
+                      try {
+                        const result = await converse(updatedMessages, context_gathered);
 
-                      const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
-                      const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : [];
-                      const outContextGathered = typeof result.context_gathered === "boolean" ? result.context_gathered : false;
+                        setMessages((prev) => {
+                          const copy = [...prev];
+                          if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
+                            copy.pop();
+                          }
+                          return copy;
+                        });
 
-                      outMsgs.forEach((m) => addMessage(String(m), "bot"));
-                      if (outContextGathered) {
-                        setPills(["schedule_meeting", "learn_more"]);
-                      } else {
-                        setPills(outPills);
-                      }
-                      setContext_gathered(outContextGathered);
+                        const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
+                        const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : [];
+                        const outContextGathered = typeof result.context_gathered === "boolean" ? result.context_gathered : false;
 
-                      setConnBadge("Ready");
-                    } catch (err) {
-                      console.error(err);
-
-                      setMessages((prev) => {
-                        const copy = [...prev];
-                        if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
-                          copy[copy.length - 1] =
-                            { who: "bot", text: "I couldn’t respond right now. Try again or check your connection." };
+                        outMsgs.forEach((m) => addMessage(String(m), "bot"));
+                        if (outContextGathered) {
+                          setPills(["schedule_meeting", "learn_more"]);
                         } else {
-                          copy.push({ who: "bot", text: "I couldn’t respond right now. Try again or check your connection." });
+                          setPills(outPills);
                         }
-                        return copy;
-                      });
+                        setContext_gathered(outContextGathered);
 
-                      setConnBadge("Check connection");
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  {p}
-                </button>
-              ))}
+                        setConnBadge("Ready");
+                      } catch (err) {
+                        console.error(err);
+
+                        setMessages((prev) => {
+                          const copy = [...prev];
+                          if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
+                            copy[copy.length - 1] =
+                              { who: "bot", text: "I couldn’t respond right now. Try again or check your connection." };
+                          } else {
+                            copy.push({ who: "bot", text: "I couldn’t respond right now. Try again or check your connection." });
+                          }
+                          return copy;
+                        });
+
+                        setConnBadge("Check connection");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    {p}
+                  </button>
+                ))
+              )}
             </div>
           ) : null}
 
