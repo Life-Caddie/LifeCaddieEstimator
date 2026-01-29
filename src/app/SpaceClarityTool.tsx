@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 import { UserMenu } from "../components/auth/UserMenu";
+import CalendarButton from "../components/CalendarButton";
 import { supabaseBrowser } from "../lib/supabase/browser";
 
 const supabase = {
@@ -474,17 +475,11 @@ export default function SpaceClarityTool() {
             <div style={styles.pillRow}>
               {pills.length === 2 && pills[0] === "schedule_meeting" && pills[1] === "learn_more" ? (
                 <>
-                  <button
-                    type="button"
-                    style={styles.pill}
+                  <CalendarButton
+                    url="https://calendly.com/lifecaddie/consultation"
+                    text="Schedule meeting"
                     disabled={busy}
-                    onClick={() => {
-                      if (busy) return;
-                      window.open("https://en.wikipedia.org/wiki/Turtle", "_blank", "noopener");
-                    }}
-                  >
-                    Schedule meeting
-                  </button>
+                  />
 
                   <button
                     type="button"
