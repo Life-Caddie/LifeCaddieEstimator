@@ -33,19 +33,13 @@ const services = `
 export function getConversationInstructions(
   chatHistory: any[],
   userMessageCount: number,
-  contextGathered?: boolean
+  contextGathered: boolean
 ): string {
   const chatHistoryFormatted = chatHistory
     .map((msg: any) => `${msg.who}: ${msg.text}`)
     .join("\n");
 
-  if (contextGathered === true) {
-    return getRecommendationInstructions(chatHistoryFormatted);
-  }
-  if (contextGathered === false) {
-    return getInitialInstructions(chatHistoryFormatted);
-  }
-  const isSecondUserMessage = userMessageCount > 2;
+  const isSecondUserMessage = userMessageCount > 3 || contextGathered;
   if (isSecondUserMessage) {
     return getRecommendationInstructions(chatHistoryFormatted);
   } else {
@@ -67,10 +61,9 @@ ${chatHistoryFormatted}
 
 Return STRICT JSON ONLY:
 {
-  "messages": string[],       // 1-3 short chat bubbles for the response
-  "quick_actions": string[],  // 0-3 optional tappable labels
-  "context_gathered": boolean // true if you have enough context to recommend a service, false otherwise
-}
+  "messages": string[],           // 1-3 short chat bubbles for the response
+  "quick_actions": string[],      // 0-3 optional tappable labels
+  "context_gathered": boolean
 
 Rules:
 - Kind, no shame.
@@ -100,9 +93,9 @@ ${chatHistoryFormatted}
 
 Return STRICT JSON ONLY:
 {
-  "messages": string[],       // 1 medium length paragraph, suggesting 1 service
-  "quick_actions": string[],  // 0-3 optional tappable labels (e.g., "Schedule Assessment", "Learn More")
-  "context_gathered": boolean // should be true as recommendations are being made
+  "messages": string[],           // 1 medium length paragraph, suggesting 1 service
+  "quick_actions": string[],      // 0-3 optional tappable labels (e.g., "Schedule Assessment", "Learn More")
+  "context_gathered": boolean     // true when context is gathered and recommendation is being provided
 }
 
 Rules:
@@ -112,6 +105,5 @@ Rules:
 - Make it feel like a natural recommendation based on what they shared, not a sales pitch.
 - Ensure tone emphasizes Life Caddie as personal, in-depth help not just a moving service.
 - Be specific about HOW Life Caddie services solve their problem.
-- Always set context_gathered to true when in recommendation mode.
 `.trim();
 }

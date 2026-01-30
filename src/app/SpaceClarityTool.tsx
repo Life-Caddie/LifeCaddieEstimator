@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 import { UserMenu } from "../components/auth/UserMenu";
+import CalendarButton from "../components/CalendarButton";
 import { supabaseBrowser } from "../lib/supabase/browser";
 
 const supabase = {
@@ -66,6 +67,7 @@ export default function SpaceClarityTool() {
   const [pills, setPills] = useState<string[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [context_gathered, setContext_gathered] = useState(false);
 
   // honeypot: bots sometimes fill hidden fields
   const [websiteHp, setWebsiteHp] = useState("");
@@ -145,10 +147,11 @@ export default function SpaceClarityTool() {
     return data.token as string;
   }
 
-  async function converse(messages: Msg[]) {
+  async function converse(messages: Msg[], contextGathered: boolean) {
     const token = await getSessionToken();
     const fd = new FormData();
     fd.append("chat_history", JSON.stringify(messages));
+    fd.append("context_gathered", String(contextGathered));
 
     const resp = await fetch(`${apiBase}/api/conversation`, {
       method: "POST",
@@ -162,7 +165,7 @@ export default function SpaceClarityTool() {
       throw new Error(err.error || `Conversation failed (${resp.status}).`);
     }
 
-    return (await resp.json()) as { messages?: string[]; quick_actions?: string[] };
+    return (await resp.json()) as { messages?: string[]; quick_actions?: string[]; context_gathered?: boolean };
   }
 
   async function analyzeSpace(file: File, goalVal: string, feelingVal: string, messages: Msg[]) {
@@ -310,7 +313,7 @@ export default function SpaceClarityTool() {
     setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
 
     try {
-      const result = await converse(updatedMessages);
+      const result = await converse(updatedMessages, context_gathered);
 
       setMessages((prev) => {
         const copy = [...prev];
@@ -322,9 +325,15 @@ export default function SpaceClarityTool() {
 
       const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
       const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : [];
+      const outContextGathered = typeof result.context_gathered === "boolean" ? result.context_gathered : false;
 
       outMsgs.forEach((m) => addMessage(String(m), "bot"));
-      setPills(outPills);
+      if (outContextGathered) {
+        setPills(["schedule_meeting", "learn_more"]);
+      } else {
+        setPills(outPills);
+      }
+      setContext_gathered(outContextGathered);
 
       setConnBadge("Ready");
     } catch (err) {
@@ -464,63 +473,91 @@ export default function SpaceClarityTool() {
 
           {pills.length ? (
             <div style={styles.pillRow}>
-              {pills.map((p, i) => (
-                <button
-                  key={`${p}-${i}`}
-                  type="button"
-                  style={styles.pill}
-                  disabled={busy}
-                  onClick={async () => {
-                    if (busy) return;
-                    const updatedMessages = [...messages, { who: "user", text: p } as Msg];
-                    setMessages(updatedMessages);
+              {pills.length === 2 && pills[0] === "schedule_meeting" && pills[1] === "learn_more" ? (
+                <>
+                  <CalendarButton
+                    url="https://calendly.com/lifecaddie/consultation"
+                    text="Schedule meeting"
+                    disabled={busy}
+                  />
 
-                    setBusy(true);
-                    setConnBadge("Working…");
+                  <button
+                    type="button"
+                    style={styles.pill}
+                    disabled={busy}
+                    onClick={() => {
+                      if (busy) return;
+                      window.open("https://www.lifecaddie.org/new-services-for-successful-and-amazing-results/", "_blank", "noopener");
+                    }}
+                  >
+                    Learn more
+                  </button>
+                </>
+              ) : (
+                pills.map((p, i) => (
+                  <button
+                    key={`${p}-${i}`}
+                    type="button"
+                    style={styles.pill}
+                    disabled={busy}
+                    onClick={async () => {
+                      if (busy) return;
+                      const updatedMessages = [...messages, { who: "user", text: p } as Msg];
+                      setMessages(updatedMessages);
 
-                    setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
+                      setBusy(true);
+                      setConnBadge("Working…");
 
-                    try {
-                      const result = await converse(updatedMessages);
+                      setMessages((prev) => [...prev, { who: "bot", text: "Thinking…", } as Msg]);
 
-                      setMessages((prev) => {
-                        const copy = [...prev];
-                        if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
-                          copy.pop();
-                        }
-                        return copy;
-                      });
+                      try {
+                        const result = await converse(updatedMessages, context_gathered);
 
-                      const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
-                      const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : [];
+                        setMessages((prev) => {
+                          const copy = [...prev];
+                          if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
+                            copy.pop();
+                          }
+                          return copy;
+                        });
 
-                      outMsgs.forEach((m) => addMessage(String(m), "bot"));
-                      setPills(outPills);
+                        const outMsgs = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
+                        const outPills = Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : [];
+                        const outContextGathered = typeof result.context_gathered === "boolean" ? result.context_gathered : false;
 
-                      setConnBadge("Ready");
-                    } catch (err) {
-                      console.error(err);
-
-                      setMessages((prev) => {
-                        const copy = [...prev];
-                        if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
-                          copy[copy.length - 1] =
-                            { who: "bot", text: "I couldn’t respond right now. Try again or check your connection." };
+                        outMsgs.forEach((m) => addMessage(String(m), "bot"));
+                        if (outContextGathered) {
+                          setPills(["schedule_meeting", "learn_more"]);
                         } else {
-                          copy.push({ who: "bot", text: "I couldn’t respond right now. Try again or check your connection." });
+                          setPills(outPills);
                         }
-                        return copy;
-                      });
+                        setContext_gathered(outContextGathered);
 
-                      setConnBadge("Check connection");
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  {p}
-                </button>
-              ))}
+                        setConnBadge("Ready");
+                      } catch (err) {
+                        console.error(err);
+
+                        setMessages((prev) => {
+                          const copy = [...prev];
+                          if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
+                            copy[copy.length - 1] =
+                              { who: "bot", text: "I couldn’t respond right now. Try again or check your connection." };
+                          } else {
+                            copy.push({ who: "bot", text: "I couldn’t respond right now. Try again or check your connection." });
+                          }
+                          return copy;
+                        });
+
+                        setConnBadge("Check connection");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    {p}
+                  </button>
+                ))
+              )}
             </div>
           ) : null}
 
