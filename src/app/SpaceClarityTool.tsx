@@ -140,7 +140,7 @@ export default function SpaceClarityTool() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
- async function getSessionToken() {
+  async function getSessionToken() {
     const r = await fetch(`${apiBase}/api/session`, { method: "GET" });
     if (!r.ok) throw new Error("Session token request failed");
     const data = await r.json();
@@ -251,7 +251,7 @@ export default function SpaceClarityTool() {
         addMessage(result.follow_up_question, "bot");
       }
 
-  
+
       setConnBadge("Ready");
     } catch (err) {
       console.error(err);
