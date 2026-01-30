@@ -1,6 +1,7 @@
 "use client";
 
 import { supabaseBrowser } from "../../lib/supabase/browser";
+import "../../styles/GoogleSignInButton.css";
 
 export function GoogleSignInButton() {
   const signIn = async () => {
@@ -20,8 +21,8 @@ export function GoogleSignInButton() {
   };
 
   return (
-    <button onClick={signIn}>
-      Anonymous
+    <button className="google-signin-button" onClick={signIn}>
+      Sign in with Google
     </button>
   );
 }
