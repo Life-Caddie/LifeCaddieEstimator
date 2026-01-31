@@ -63,6 +63,7 @@ export default function SpaceClarityTool() {
 
   const [busy, setBusy] = useState(false);
   const [connBadge, setConnBadge] = useState<"Ready" | "Working…" | "Check connection">("Ready");
+  const [submitted, setSubmitted] = useState(false);
 
   const [messages, setMessages] = useState<Msg[]>([]);
   const [pills, setPills] = useState<string[]>([]);
@@ -227,7 +228,7 @@ export default function SpaceClarityTool() {
     const updatedMessages = [...messages, { who: "user", text: userMsg } as Msg];
     setMessages(updatedMessages);
 
-
+    setSubmitted(true);
     setBusy(true);
     setConnBadge("Working…");
     setPills([]);
@@ -285,6 +286,7 @@ export default function SpaceClarityTool() {
     setChatInput("");
     setConnBadge("Ready");
     setWebsiteHp("");
+    setSubmitted(false);
     setMessages([
       {
         who: "bot",
@@ -359,8 +361,8 @@ export default function SpaceClarityTool() {
 
   return (
     <div className="wrap">
-      <div className="grid">
-        <div className="card">
+      <div className={`grid ${submitted ? "grid-submitted" : ""}`}>
+        <div className={`card card-primary ${submitted ? "card-hidden" : ""}`}>
           <div className="card-header">
             <h2 className="h2">Upload + 2 quick questions</h2>
             <div className="flex-row">
@@ -452,7 +454,7 @@ export default function SpaceClarityTool() {
           </div>
         </div>
 
-        <div className="card card-secondary">
+        <div className={`card card-secondary ${submitted ? "card-expanded" : ""}`}>
           <div className="card-header">
             <h2 className="h2">Your Life Caddie Plan</h2>
             <span className="badge">{connBadge}</span>
@@ -582,4 +584,3 @@ export default function SpaceClarityTool() {
     </div>
   );
 }
-
