@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "../../lib/supabase/browser";
+import "../../styles/UserMenu.css";
 
 export function UserMenu() {
   const [email, setEmail] = useState<string | null>(null);
@@ -28,9 +29,9 @@ export function UserMenu() {
   if (!email) return null;
 
   return (
-    <div>
-      <span>{email}</span>
-      <button onClick={signOut}>Log out</button>
+    <div className="user-menu">
+      <span className="user-menu-email">{email}</span>
+      <button className="user-menu-logout" onClick={signOut}>log out</button>
     </div>
   );
 }

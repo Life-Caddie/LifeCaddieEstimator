@@ -1,0 +1,16 @@
+.google-signin-button {
+  border: none;
+  background: #111827;
+  color: #fff;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.google-signin-button:focus-visible {
+  outline: 2px solid #111827;
+  outline-offset: 2px;
+}

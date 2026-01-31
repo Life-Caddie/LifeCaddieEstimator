@@ -1,0 +1,27 @@
+.user-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-menu-email {
+  font-size: 13px;
+  color: #111827;
+}
+
+.user-menu-logout {
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  color: #111827;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.user-menu-logout:focus-visible {
+  outline: 2px solid #111827;
+  outline-offset: 2px;
+}
