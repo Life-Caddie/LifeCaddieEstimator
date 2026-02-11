@@ -361,8 +361,9 @@ export default function SpaceClarityTool() {
 
   return (
     <div className="wrap">
-      <div className={`grid ${submitted ? "grid-submitted" : ""}`}>
-        <div className={`card card-primary ${submitted ? "card-hidden" : ""}`}>
+      <div className="grid">
+        {!submitted ? (
+          <div className="card card-primary">
           <div className="card-header">
             <h2 className="h2">Upload + 2 quick questions</h2>
             <div className="flex-row">
@@ -453,8 +454,10 @@ export default function SpaceClarityTool() {
             </form>
           </div>
         </div>
+        ) : null}
 
-        <div className={`card card-secondary ${submitted ? "card-expanded" : ""}`}>
+        {submitted ? (
+          <div className="card card-secondary">
           <div className="card-header">
             <h2 className="h2">Your Life Caddie Plan</h2>
             <span className="badge">{connBadge}</span>
@@ -580,6 +583,7 @@ export default function SpaceClarityTool() {
             </button>
           </div>
         </div>
+        ) : null}
       </div>
     </div>
   );
