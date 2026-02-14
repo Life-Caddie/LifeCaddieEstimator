@@ -12,6 +12,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: prodTest
     permissions:
       contents: read #This is required for actions/checkout
 
@@ -62,4 +63,5 @@ jobs:
           app-name: 'app-clarity-dev'
           slot-name: 'Production'
           package: .
+
           
