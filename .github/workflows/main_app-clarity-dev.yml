@@ -12,7 +12,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: prodTest
     permissions:
       contents: read #This is required for actions/checkout
 
@@ -39,6 +38,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    environment: prodTest
     permissions:
       id-token: write #This is required for requesting the JWT
       contents: read #This is required for actions/checkout
@@ -65,3 +65,4 @@ jobs:
           package: .
 
           
+
