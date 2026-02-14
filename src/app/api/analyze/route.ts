@@ -5,7 +5,7 @@ import { uploadImage } from "../../../lib/azureStorage";
 
 export const runtime = "nodejs";
 
-const openai = new OpenAI({ apiKey: process.env.API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function OPTIONS(req: Request) {
   return handleOPTIONS(req);
