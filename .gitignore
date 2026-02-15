@@ -1,5 +1,6 @@
 .venv
 .env
 .next
+.env.local
 node_modules
 .vscode

@@ -232,7 +232,6 @@ export default function SpaceClarityTool() {
     setBusy(true);
     setConnBadge("Working…");
     setPills([]);
-    const thinkingId = crypto.randomUUID();
 
     setMessages((prev) => [...prev, { who: "bot", text: "Uploading and analyzing…", } as Msg]);
 
@@ -251,7 +250,6 @@ export default function SpaceClarityTool() {
         addMessage(result.task, "bot");
         addMessage(result.follow_up_question, "bot");
       }
-
 
       setConnBadge("Ready");
     } catch (err) {
@@ -331,11 +329,7 @@ export default function SpaceClarityTool() {
       const outContextGathered = typeof result.context_gathered === "boolean" ? result.context_gathered : false;
 
       outMsgs.forEach((m) => addMessage(String(m), "bot"));
-      if (outContextGathered) {
-        setPills(["schedule_meeting", "learn_more"]);
-      } else {
-        setPills(outPills);
-      }
+      setPills(outPills);
       setContext_gathered(outContextGathered);
 
       setConnBadge("Ready");
@@ -476,27 +470,18 @@ export default function SpaceClarityTool() {
 
           {pills.length ? (
             <div className="pill-row">
-              {pills.length === 2 && pills[0] === "schedule_meeting" && pills[1] === "learn_more" ? (
-                <>
+              {context_gathered ? (
+                /* Once services are identified, ALL pills open Calendly scheduling */
+                pills.map((p, i) => (
                   <CalendarButton
+                    key={`${p}-${i}`}
                     url="https://calendly.com/lifecaddie/consultation"
-                    text="Schedule meeting"
+                    text={p}
                     disabled={busy}
                   />
-
-                  <button
-                    type="button"
-                    className="pill"
-                    disabled={busy}
-                    onClick={() => {
-                      if (busy) return;
-                      window.open("https://www.lifecaddie.org/new-services-for-successful-and-amazing-results/", "_blank", "noopener");
-                    }}
-                  >
-                    Learn more
-                  </button>
-                </>
+                ))
               ) : (
+                /* Before context is gathered, pills are answer options that continue the conversation */
                 pills.map((p, i) => (
                   <button
                     key={`${p}-${i}`}
@@ -529,11 +514,7 @@ export default function SpaceClarityTool() {
                         const outContextGathered = typeof result.context_gathered === "boolean" ? result.context_gathered : false;
 
                         outMsgs.forEach((m) => addMessage(String(m), "bot"));
-                        if (outContextGathered) {
-                          setPills(["schedule_meeting", "learn_more"]);
-                        } else {
-                          setPills(outPills);
-                        }
+                        setPills(outPills);
                         setContext_gathered(outContextGathered);
 
                         setConnBadge("Ready");
@@ -544,9 +525,9 @@ export default function SpaceClarityTool() {
                           const copy = [...prev];
                           if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === "Thinking…") {
                             copy[copy.length - 1] =
-                              { who: "bot", text: "I couldn’t respond right now. Try again or check your connection." };
+                              { who: "bot", text: "I couldn't respond right now. Try again or check your connection." };
                           } else {
-                            copy.push({ who: "bot", text: "I couldn’t respond right now. Try again or check your connection." });
+                            copy.push({ who: "bot", text: "I couldn't respond right now. Try again or check your connection." });
                           }
                           return copy;
                         });

@@ -1,57 +1,80 @@
 # Life Caddie Estimator App
 
-An AI-powered application designed to help users quickly evaluate organization efforts by analyzing photos of cluttered rooms. The application uses computer vision and AI reasoning to provide personalized organization estimates based on images, user goals, and emotional context.
+An AI-powered application designed to help users evaluate their organizing needs by analyzing photos of their spaces. The app uses computer vision and conversational AI to align users with specific Life Caddie service offerings, then guides them to schedule a consultation.
 
 ## Core Features
 
 * **Space Clarity Tool** — Interactive UI for uploading images and capturing user goals/feelings
-* **Image Analysis** — AI-powered image recognition to assess clutter types and space layout
-* **Organization Estimates** — Generates time, effort, and resource requirement assessments
+* **Image Analysis** — AI-powered image recognition to assess spaces and validate user emotions
+* **Service Alignment** — Conversational flow that narrows down which Life Caddie services best fit the user's needs
+* **Calendly Scheduling** — All recommended service pill buttons open Calendly to book a consultation
 * **Session Management** — Secure JWT-based session handling for API requests
-* **Conversation Flow** — Multi-turn conversation interface for refined estimates
-* **CORS Support** — Cross-origin request handling for web integration
+* **Authentication** — Google OAuth via Supabase
+* **Azure Storage** — Optional photo upload to Azure Blob Storage
+
+## Conversation Flow
+
+1. **Upload + Context**: User uploads a photo, selects a goal, and picks a feeling
+2. **First Response**: Bot validates feelings, acknowledges the photo, and asks ONE clarifying question to align toward services
+3. **Service Confirmation**: After the user answers, bot recommends 2-3 matching Life Caddie services with pill buttons (each opens Calendly)
+4. **Refinement**: Further conversation narrows recommendations to 1-2 services; pill buttons continue targeting Calendly
 
 ## Project Structure
 
 ```
 LifeCaddieEstimator/
-├── ExperimentalEstimator/     # Experimental Python estimator module
+├── ExperimentalEstimator/        # Experimental Python estimator module
+│   └── context.md                # LLM context for experimental estimator
 ├── src/
-│   └── app/
-│       ├── api/
-│       │   ├── toolkit.ts              # Shared API utilities
-│       │   ├── analyze/route.ts        # POST /api/analyze - Image analysis endpoint
-│       │   ├── conversation/route.ts   # POST /api/conversation - Conversation endpoint
-│       │   └── session/route.ts        # POST /api/session - Session token generation
-│       ├── layout.tsx                  # Next.js root layout
-│       ├── page.tsx                    # Home page
-│       └── SpaceClarityTool.tsx        # Main client component (image upload, UI)
-├── .gitignore                 # Git ignore rules
-├── next-env.d.ts              # Next.js TypeScript definitions
-├── next.config.mjs            # Next.js configuration
-├── package.json               # Node.js dependencies and scripts
-├── package-lock.json          # Locked dependency versions
-├── README.md                  # Project documentation
-├── requirements.txt           # Python dependencies
-└── tsconfig.json              # TypeScript configuration
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── toolkit.ts              # Shared API utilities, CORS, JWT, services list
+│   │   │   ├── analyze/route.ts        # POST /api/analyze - Image analysis endpoint
+│   │   │   ├── conversation/
+│   │   │   │   ├── route.ts            # POST /api/conversation - Conversation endpoint
+│   │   │   │   └── toneBuilder.ts      # Prompt builder for conversation stages
+│   │   │   └── session/route.ts        # GET /api/session - Session token generation
+│   │   ├── auth/callback/page.tsx      # OAuth callback handler
+│   │   ├── layout.tsx                  # Next.js root layout
+│   │   ├── page.tsx                    # Home page
+│   │   └── SpaceClarityTool.tsx        # Main client component (chat UI, pills, Calendly)
+│   ├── components/
+│   │   ├── auth/
+│   │   │   ├── GoogleSignInButton.tsx  # Google OAuth sign-in button
+│   │   │   └── UserMenu.tsx            # Authenticated user menu
+│   │   └── CalendarButton.tsx          # Calendly popup button component
+│   ├── lib/
+│   │   ├── azureStorage.ts             # Azure Blob Storage upload helper
+│   │   └── supabase/                   # Supabase client configuration
+│   └── styles/
+│       └── SpaceClarityTool.css        # Chat UI styles
+├── .gitignore
+├── next.config.mjs
+├── package.json
+├── README.md
+├── requirements.txt
+└── tsconfig.json
 ```
+
 ## Technology Stack
 
-* **Frontend**: Next.js 14, React 18, TypeScript
+* **Frontend**: Next.js, React, TypeScript
 * **Backend**: Next.js API Routes
-* **Authentication**: JWT (JSON Web Tokens) via jose
-* **AI Integration**: OpenAI API
+* **Authentication**: Supabase (Google OAuth) + JWT session tokens (jose)
+* **AI Integration**: OpenAI API (gpt-4.1-mini with vision)
+* **Scheduling**: Calendly (react-calendly)
+* **Storage**: Azure Blob Storage (optional)
 * **Python**: Optional experimental estimator module
-* **Build**: TypeScript, ESM modules
 
 ## Requirements
 
 * **Node.js**: v18+ (LTS recommended)
 * **npm**: Included with Node.js
 * **OpenAI API Key**: Required for AI functionality
+* **Supabase Project**: Required for Google OAuth authentication
 * **Python 3.12+** (optional): Only needed for experimental Python estimator
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Clone the Repository
 
@@ -73,15 +96,26 @@ Create a `.env.local` file in the project root (do not commit):
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
 LC_SESSION_JWT_SECRET=your_32_character_secret_key_here
-OPENAI_MODEL=gpt-4-mini
+OPENAI_MODEL=gpt-4.1-mini
+
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Optional: Azure Blob Storage for photo persistence
+AZURE_STORAGE_CONTAINER_IMAGES=your_container_name
+AZURE_STORAGE_CONNECTION_STRING=your_connection_string
 ```
 
 **Required variables:**
 - `OPENAI_API_KEY` — Your OpenAI API key for image analysis and conversation
 - `LC_SESSION_JWT_SECRET` — 32+ character secret for signing JWT session tokens
+- `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anonymous key
 
 **Optional variables:**
-- `OPENAI_MODEL` — Override the default model (defaults to `gpt-4-mini`)
+- `OPENAI_MODEL` — Override the default model (defaults to `gpt-4.1-mini`)
+- `AZURE_STORAGE_CONTAINER_IMAGES` — Azure container name for photo uploads
+- `AZURE_STORAGE_CONNECTION_STRING` — Azure connection string
 
 ### 4. Run the Development Server
 
@@ -97,7 +131,6 @@ If you want to work with the experimental Python estimator:
 
 ```bash
 python -m venv venv
-# Activate virtual environment:
 # Windows: venv\Scripts\activate
 # macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
@@ -107,23 +140,37 @@ pip install -r requirements.txt
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/session` | POST | Generate a JWT session token |
-| `/api/analyze` | POST | Submit image and receive clutter analysis |
-| `/api/conversation` | POST | Continue multi-turn conversation for refined estimates |
+| `/api/session` | GET | Generate a JWT session token |
+| `/api/analyze` | POST | Submit image + goal/feeling, receive validation and clarifying question |
+| `/api/conversation` | POST | Continue conversation to align and refine service recommendations |
 
 All API endpoints support CORS for the following origins:
 - `http://localhost:3000` (development)
 - `https://lifecaddie.org` (production)
 - `https://www.lifecaddie.org` (production)
 
+## Key Architecture Details
+
+### Services List
+The 29 Life Caddie services are defined once in `src/app/api/toolkit.ts` as `SERVICES_LIST` and imported by both the analyze and conversation routes.
+
+### Prompt Stages (toneBuilder.ts)
+- **Initial**: Asks clarifying questions with quick-answer pill buttons
+- **Service Confirmation**: Recommends 2-3 services with exact service names as pills (all open Calendly)
+- **Refinement**: Narrows to 1-2 services based on continued conversation
+
+### Pill Button Behavior
+- Before `context_gathered` is true: pills are conversational answer options that continue the chat
+- After `context_gathered` is true: pills display service names and each opens the Calendly scheduling modal
+
 ## Data Handling
 
 - **Image uploads** are processed in-memory and converted to base64 data URLs
-- Images are **not persisted** to disk by default
+- Images are optionally persisted to Azure Blob Storage if configured
 - All API requests require a valid JWT session token
-- Session tokens are short-lived and issued via `/api/session`
+- Session tokens are short-lived (10 minutes) and issued via `/api/session`
 
-## 🏗️ Building for Production
+## Building for Production
 
 ```bash
 npm run build
@@ -132,27 +179,6 @@ npm start
 
 The app will run on port 3000 (configurable via environment).
 
-## Project Dependencies
-
-### Frontend (Node.js)
-- **next** (^14.2.0) — React framework
-- **react** (^18.2.0) — UI library
-- **react-dom** (^18.2.0) — React DOM rendering
-- **openai** (^4.0.0) — OpenAI API client
-- **jose** (^5.9.0) — JWT token handling
-- **typescript** (5.9.3) — Type safety
-
-### Python (Optional)
-See `requirements.txt` for experimental estimator dependencies.
-
-## Future Enhancements
-
-* DB integration for user retention and company projects
-* Export estimates as structured reports
-* Integration with professional organizing services
-* Advanced caching and session persistence
-* Mobile app version
-
-## 📄 License
+## License
 
 See LICENSE file for details.
