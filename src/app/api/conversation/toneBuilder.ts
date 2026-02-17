@@ -81,6 +81,7 @@ Rules:
 - Set context_gathered to true.
 - Do NOT be salesy — be genuinely helpful and compassionate.
 - Make it feel like a natural recommendation, not a pitch.
+- When describing a service start with 'Life Caddie's [service name here]' rather then just the service name.
 `.trim();
 }
 
@@ -112,5 +113,6 @@ Rules:
 - Set context_gathered to true.
 - Emphasize how Life Caddie provides personal, in-depth support.
 - Be specific about HOW the recommended service(s) solve their problem.
+- When describing a service start with 'Life Caddie's [service name here]' rather then just the service name.
 `.trim();
 }
