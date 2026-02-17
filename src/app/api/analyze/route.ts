@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { corsHeaders, handleOPTIONS, verifySession, safeJsonParse } from "../toolkit";
+import { corsHeaders, handleOPTIONS, verifySession, safeJsonParse, SERVICES_LIST } from "../toolkit";
 import { uploadImage } from "../../../lib/azureStorage";
 
 export const runtime = "nodejs";
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
     }
 
     const instructions = `
-You are a calm, non-judgmental downsizing & organizing guide.
+You are a calm, non-judgmental downsizing & organizing guide for 'Life Caddie'.
 
 User inputs:
 - goal: ${goal}
@@ -104,18 +104,22 @@ User inputs:
 Chat History:
 ${chatHistory.map((msg: { who: any; text: any; }) => `${msg.who}: ${msg.text}`).join('\n')}
 
+Available Life Caddie Services:
+${SERVICES_LIST}
+
 Return STRICT JSON ONLY:
 {
-  "task": string, // 3-4 sentances
-  "follow_up_question": string // 1-2 sentances
+  "task": string,              // 1-2 sentences: validate the user's feelings and briefly acknowledge what you see in the photo.
+  "follow_up_question": string // 1 sentence: ask ONE clarifying question designed to narrow down which Life Caddie service(s) best fit the user's situation. The question should help distinguish between service categories (e.g., do they need hands-on help vs. a plan, are they on a timeline, is this emotional or logistical, etc.).
 }
 
 Rules:
 - Kind, no shame.
-- Should start with a sentance to validate the users feelings.
-- If safety hazards appear, mention gently.
-- Gently provide a quick task the user could do, based on the provided image, goal, and feeling.
-- Ask a question about the user's goal, its scope and progress. Understand the image may not be the only space.
+- Start by validating the user's feelings in 1-2 sentences.
+- If safety hazards appear in the photo, mention gently.
+- Ask exactly ONE clarifying question. The question must help align the user toward specific Life Caddie services.
+- Do NOT recommend services yet — just ask the one question.
+- Do NOT provide a task or action step. The goal is to understand the user's needs before recommending.
 `.trim();
 
     const resp = await openai.responses.create({
@@ -125,7 +129,7 @@ Rules:
         {
           role: "user",
           content: [
-            { type: "input_text", text: "Analyze this space photo and generate the Clarity Plan with a quick task and follow-up question." },
+            { type: "input_text", text: "Analyze this space photo and provide a validation of the user's feelings along with one clarifying question." },
             { type: "input_image", image_url: dataUrl, detail: "auto" }
 
           ]
@@ -144,11 +148,8 @@ Rules:
     if (!task || !follow_up_question) {
       return NextResponse.json(
         {
-          messages: [
-            "Thanks — I’m here with you. Let’s take one gentle step that creates immediate relief.",
-            "Your first 10-minute step: choose ONE small zone (one shelf, one drawer, one counter corner). Remove anything that obviously doesn’t belong, then put back only what supports that zone’s purpose.",
-            "If you tell me what kind of space this is (kitchen/closet/office/etc.), I can outline the next 2–3 zones in a calm order."
-          ]
+          task: "Thanks for sharing that — I can see this space has a lot going on, and it makes sense that you're feeling that way.",
+          follow_up_question: "Are you looking more for a structured plan to follow on your own, or would hands-on support from someone alongside you feel more helpful right now?"
         },
         { headers: corsHeaders(origin) }
       );

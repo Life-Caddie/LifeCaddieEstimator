@@ -10,16 +10,18 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const finalize = async () => {
-      const supabase = supabaseBrowser();
+    const supabase = supabaseBrowser();
 
       // After OAuth redirect, Supabase stores session automatically in the browser.
       const { data, error } = await supabase.auth.getSession();
       if (error) console.error("getSession error:", error);
 
-      // Optional: if you store a job id in localStorage, link it here
-      // const jobId = localStorage.getItem("lc_job_id");
-      // const userId = data.session?.user.id;
-      // if (jobId && userId) { ... }
+      const jobId = localStorage.getItem("lc_job_id");
+      const userId = data.session?.user.id;
+
+      if (jobId && userId) {
+        await supabase.from("jobs").update({ user_id: userId }).eq("id", jobId);
+      }
 
       router.replace("/"); // or "/dashboard" or "/continue"
     };
