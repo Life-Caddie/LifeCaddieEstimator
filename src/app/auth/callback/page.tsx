@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../../lib/supabaseClient";
 import { supabaseBrowser } from "../../../lib/supabase/browser";
 
 export default function AuthCallbackPage() {
@@ -10,9 +9,8 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const finalize = async () => {
-    const supabase = supabaseBrowser();
+      const supabase = supabaseBrowser();
 
-      // After OAuth redirect, Supabase stores session automatically in the browser.
       const { data, error } = await supabase.auth.getSession();
       if (error) console.error("getSession error:", error);
 
@@ -23,7 +21,7 @@ export default function AuthCallbackPage() {
         await supabase.from("jobs").update({ user_id: userId }).eq("id", jobId);
       }
 
-      router.replace("/"); // or "/dashboard" or "/continue"
+      router.replace("/");
     };
 
     finalize();

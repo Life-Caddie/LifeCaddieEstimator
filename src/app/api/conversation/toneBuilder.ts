@@ -1,41 +1,36 @@
 import { SERVICES_LIST } from "../toolkit";
 
-const services = SERVICES_LIST;
-
 export function getConversationInstructions(
   chatHistory: any[],
   userMessageCount: number,
   contextGathered: boolean
 ): string {
-  const chatHistoryFormatted = chatHistory
+  const formattedHistory = chatHistory
     .map((msg: any) => `${msg.who}: ${msg.text}`)
     .join("\n");
 
   if (contextGathered) {
-    return getRefinementInstructions(chatHistoryFormatted);
+    return getRefinementInstructions(formattedHistory);
   }
 
-  // After the initial photo analysis exchange (bot asked clarifying Q, user answered),
-  // the first converse call should confirm services with pill buttons.
-  // userMessageCount includes the photo upload message + the answer = 2 user messages minimum
   if (userMessageCount >= 2) {
-    return getServiceConfirmationInstructions(chatHistoryFormatted);
+    return getServiceConfirmationInstructions(formattedHistory);
   }
 
-  return getInitialInstructions(chatHistoryFormatted);
+  return getInitialInstructions(formattedHistory);
 }
 
-function getInitialInstructions(chatHistoryFormatted: string): string {
+function getInitialInstructions(formattedHistory: string): string {
   return `
 You are a calm, non-judgmental downsizing & organizing guide for 'Life Caddie'.
 
 Based on the chat history, ask a clarifying question to better understand the user's needs and align them with a Life Caddie service.
 
 Available Services:
-${services}
+${SERVICES_LIST}
 
 Chat History:
-${chatHistoryFormatted}
+${formattedHistory}
 
 Return STRICT JSON ONLY:
 {
@@ -53,17 +48,17 @@ Rules:
 `.trim();
 }
 
-function getServiceConfirmationInstructions(chatHistoryFormatted: string): string {
+function getServiceConfirmationInstructions(formattedHistory: string): string {
   return `
 You are a calm, non-judgmental downsizing & organizing guide for 'Life Caddie'.
 
 The user has answered your clarifying question. Based on everything they've shared (photo, goal, feeling, and their answer), confirm which Life Caddie services are the best fit.
 
 Available Services:
-${services}
+${SERVICES_LIST}
 
 Chat History:
-${chatHistoryFormatted}
+${formattedHistory}
 
 Return STRICT JSON ONLY:
 {
@@ -85,17 +80,17 @@ Rules:
 `.trim();
 }
 
-function getRefinementInstructions(chatHistoryFormatted: string): string {
+function getRefinementInstructions(formattedHistory: string): string {
   return `
 You are a calm, non-judgmental downsizing & organizing guide for 'Life Caddie'.
 
 The user has already received service recommendations. They are continuing the conversation to learn more or refine their options. Based on what they say, help narrow down to the best 1-2 services.
 
 Available Services:
-${services}
+${SERVICES_LIST}
 
 Chat History:
-${chatHistoryFormatted}
+${formattedHistory}
 
 Return STRICT JSON ONLY:
 {

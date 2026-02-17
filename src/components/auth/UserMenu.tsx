@@ -1,25 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { supabaseBrowser } from "../../lib/supabase/browser";
+import { useAuthEmail } from "../../hooks/useAuthEmail";
 import "../../styles/UserMenu.css";
 
 export function UserMenu() {
-  const [email, setEmail] = useState<string | null>(null);
-
-  useEffect(() => {
-    const supabase = supabaseBrowser();
-
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null);
-    });
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setEmail(session?.user?.email ?? null);
-    });
-
-    return () => sub.subscription.unsubscribe();
-  }, []);
+  const email = useAuthEmail();
 
   const signOut = async () => {
     const supabase = supabaseBrowser();

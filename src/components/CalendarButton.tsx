@@ -14,34 +14,23 @@ export default function CalendarButton({ url, text = "Schedule meeting", disable
   const [rootEl, setRootEl] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    // react-calendly uses portals; ensure we have a root element to attach to
-    // In Next.js the document exists only on the client, and this file is a client component.
     setRootEl(document.getElementById("root") ?? document.getElementById("__next") ?? document.body);
   }, []);
 
-  const pillStyle: React.CSSProperties = {
-    fontSize: 12,
-    border: "1px solid #e5e7eb",
-    background: "#fff",
-    borderRadius: 999,
-    padding: "7px 10px",
-    cursor: disabled ? "not-allowed" : "pointer",
-  };
-
   return (
     <>
-      <button type="button" disabled={disabled} onClick={() => setOpen(true)} style={pillStyle}>
+      <button type="button" disabled={disabled} onClick={() => setOpen(true)} className="pill">
         {text}
       </button>
 
-      {rootEl ? (
+      {rootEl && (
         <PopupModal
           url={url}
           rootElement={rootEl}
           open={open}
           onModalClose={() => setOpen(false)}
         />
-      ) : null}
+      )}
     </>
   );
 }

@@ -1,17 +1,6 @@
 import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
 import { DefaultAzureCredential } from "@azure/identity";
 
-/**
- * Azure Blob Storage helper
- * - Supports connection string, account/key, or Azure AD (DefaultAzureCredential).
- * - Exports `uploadImage` which ensures the container exists and uploads binary data.
- *
- * Env vars supported (in order):
- * - `AZURE_STORAGE_CONNECTION_STRING`
- * - `AZURE_STORAGE_ACCOUNT_NAME` + `AZURE_STORAGE_ACCOUNT_KEY`
- * - `AZURE_STORAGE_ACCOUNT_NAME` + AZURE AD creds (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET)
- */
-
 function getAccountUrl(account: string) {
   return `https://${account}.blob.core.windows.net`;
 }
@@ -31,7 +20,6 @@ function getBlobServiceClient(): BlobServiceClient {
   }
 
   if (account) {
-    // Attempt Azure AD authentication via DefaultAzureCredential
     const cred = new DefaultAzureCredential();
     return new BlobServiceClient(getAccountUrl(account), cred);
   }
@@ -49,21 +37,12 @@ export async function uploadImage(
 ): Promise<{ url: string }> {
   const svc = getBlobServiceClient();
   const container = svc.getContainerClient(containerName);
-
-  // Create container if it doesn't exist (no-op if exists)
   await container.createIfNotExists();
 
   const blockBlob = container.getBlockBlobClient(blobName);
-
   await blockBlob.uploadData(data, {
     blobHTTPHeaders: { blobContentType: contentType || "application/octet-stream" },
   });
 
   return { url: blockBlob.url };
 }
-
-// Example usage (server-side):
-// const buf = Buffer.from(await photo.arrayBuffer());
-// await uploadImage('uploads', `${Date.now()}-${photo.name}`, buf, photo.type);
-
-export default { uploadImage };
