@@ -28,26 +28,38 @@ LifeCaddieEstimator/
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── toolkit.ts              # Shared API utilities, CORS, JWT, services list
-│   │   │   ├── analyze/route.ts        # POST /api/analyze - Image analysis endpoint
+│   │   │   ├── toolkit.ts              # Shared API utilities: CORS, JWT, services list, JSON parsing
+│   │   │   ├── analyze/route.ts        # POST /api/analyze — image analysis endpoint
 │   │   │   ├── conversation/
-│   │   │   │   ├── route.ts            # POST /api/conversation - Conversation endpoint
+│   │   │   │   ├── route.ts            # POST /api/conversation — conversation endpoint (JSON body)
 │   │   │   │   └── toneBuilder.ts      # Prompt builder for conversation stages
-│   │   │   └── session/route.ts        # GET /api/session - Session token generation
+│   │   │   └── session/route.ts        # GET /api/session — session token generation
 │   │   ├── auth/callback/page.tsx      # OAuth callback handler
 │   │   ├── layout.tsx                  # Next.js root layout
 │   │   ├── page.tsx                    # Home page
-│   │   └── SpaceClarityTool.tsx        # Main client component (chat UI, pills, Calendly)
+│   │   └── SpaceClarityTool.tsx        # Orchestrator — state management, renders IntakeForm or ChatView
 │   ├── components/
-│   │   ├── auth/
-│   │   │   ├── GoogleSignInButton.tsx  # Google OAuth sign-in button
-│   │   │   └── UserMenu.tsx            # Authenticated user menu
-│   │   └── CalendarButton.tsx          # Calendly popup button component
+│   │   ├── IntakeForm.tsx              # Photo upload form with goal/feeling selects
+│   │   ├── ChatView.tsx                # Chat log, pill buttons, and message input bar
+│   │   ├── CalendarButton.tsx          # Calendly popup button component
+│   │   └── auth/
+│   │       ├── GoogleSignInButton.tsx  # Google OAuth sign-in button
+│   │       └── UserMenu.tsx            # Authenticated user menu
+│   ├── constants/
+│   │   └── intake.ts                   # Shared GOALS, FEELINGS, allowed values, welcome message
+│   ├── hooks/
+│   │   └── useAuthEmail.ts             # Shared hook for tracking Supabase auth email state
 │   ├── lib/
+│   │   ├── api.ts                      # Client-side API functions: getSessionToken, analyzeSpace, sendConversation
 │   │   ├── azureStorage.ts             # Azure Blob Storage upload helper
-│   │   └── supabase/                   # Supabase client configuration
-│   └── styles/
-│       └── SpaceClarityTool.css        # Chat UI styles
+│   │   └── supabase/
+│   │       └── browser.ts              # Browser-side Supabase client
+│   ├── styles/
+│   │   ├── SpaceClarityTool.css        # Main UI styles
+│   │   ├── GoogleSignInButton.css      # Sign-in button styles
+│   │   └── UserMenu.css               # User menu styles
+│   └── types/
+│       └── react-input.d.ts            # Type declaration for input capture attribute
 ├── .gitignore
 ├── next.config.mjs
 ├── package.json
@@ -138,11 +150,11 @@ pip install -r requirements.txt
 
 ## API Endpoints
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/session` | GET | Generate a JWT session token |
-| `/api/analyze` | POST | Submit image + goal/feeling, receive validation and clarifying question |
-| `/api/conversation` | POST | Continue conversation to align and refine service recommendations |
+| Endpoint | Method | Body Format | Purpose |
+|----------|--------|-------------|---------|
+| `/api/session` | GET | — | Generate a JWT session token |
+| `/api/analyze` | POST | FormData | Submit image + goal/feeling, receive validation and clarifying question |
+| `/api/conversation` | POST | JSON | Continue conversation to align and refine service recommendations |
 
 All API endpoints support CORS for the following origins:
 - `http://localhost:3000` (development)
@@ -150,6 +162,18 @@ All API endpoints support CORS for the following origins:
 - `https://www.lifecaddie.org` (production)
 
 ## Key Architecture Details
+
+### Component Structure
+- **`SpaceClarityTool`** — Orchestrator component that manages all state and renders either `IntakeForm` or `ChatView`
+- **`IntakeForm`** — Handles photo upload, goal/feeling selection, honeypot, and form submission
+- **`ChatView`** — Renders the chat log, pill buttons (conversational or Calendly), and the message input bar
+- **`CalendarButton`** — Wraps react-calendly's `PopupModal` for scheduling
+
+### Shared Modules
+- **`constants/intake.ts`** — Single source of truth for goals, feelings, and allowed values (used by both client and server)
+- **`hooks/useAuthEmail.ts`** — Shared hook for Supabase auth state (used by `SpaceClarityTool` and `UserMenu`)
+- **`lib/api.ts`** — Client-side API layer with typed request/response functions and the shared `ChatMessage` type
+- **`api/toolkit.ts`** — Server-side shared utilities: CORS headers, JWT verification, services list, safe JSON parsing
 
 ### Services List
 The 29 Life Caddie services are defined once in `src/app/api/toolkit.ts` as `SERVICES_LIST` and imported by both the analyze and conversation routes.
