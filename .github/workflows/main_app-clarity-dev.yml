@@ -4,9 +4,8 @@
 name: Build and deploy Node.js app to Azure Web App - app-clarity-dev
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -75,5 +74,6 @@ jobs:
           package: .
 
           
+
 
 
