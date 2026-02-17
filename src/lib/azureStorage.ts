@@ -51,7 +51,7 @@ export async function uploadImage(
   const container = svc.getContainerClient(containerName);
 
   // Create container if it doesn't exist (no-op if exists)
-  await container.createIfNotExists({ access: 'container' });
+  await container.createIfNotExists();
 
   const blockBlob = container.getBlockBlobClient(blobName);
 
