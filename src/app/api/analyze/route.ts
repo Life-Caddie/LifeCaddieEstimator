@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { corsHeaders, handleOPTIONS, verifySession, safeJsonParse, SERVICES_LIST } from "../toolkit";
-import { uploadImage } from "../../../lib/azureStorage";
+import { uploadBlob } from "../../../lib/azureStorage";
 import { ALLOWED_GOAL_VALUES, ALLOWED_FEELING_VALUES } from "../../../constants/intake";
 
 export const runtime = "nodejs";
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       try {
         const blobName = `${Date.now()}-${crypto.randomUUID()}-${photo.name}`;
         const buf = Buffer.from(arrayBuffer);
-        await uploadImage(container, blobName, buf, mime);
+        await uploadBlob(container, blobName, buf, mime);
       } catch (err) {
         console.error("azure upload failed:", err);
       }

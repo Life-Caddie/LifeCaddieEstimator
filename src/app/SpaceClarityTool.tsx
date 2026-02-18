@@ -6,7 +6,7 @@ import { UserMenu } from "../components/auth/UserMenu";
 import IntakeForm from "../components/IntakeForm";
 import ChatView from "../components/ChatView";
 import { useAuthEmail } from "../hooks/useAuthEmail";
-import { analyzeSpace, sendConversation } from "../lib/api";
+import { analyzeSpace, sendConversation, uploadTranscript } from "../lib/api";
 import { GOALS, FEELINGS, WELCOME_MESSAGE } from "../constants/intake";
 import type { ChatMessage } from "../lib/api";
 import '../styles/SpaceClarityTool.css';
@@ -170,6 +170,7 @@ export default function SpaceClarityTool() {
             onChatInputChange={setChatInput}
             onSendMessage={handleSendMessage}
             onPillClick={(text) => handleConversation(text)}
+            onCalendlyOpen={() => uploadTranscript(messages).catch(console.error)}
           />
         )}
       </div>
