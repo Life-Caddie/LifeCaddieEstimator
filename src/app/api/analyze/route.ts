@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { corsHeaders, handleOPTIONS, verifySession, safeJsonParse, SERVICES_LIST } from "../toolkit";
 import { uploadImage } from "../../../lib/azureStorage";
+import { ALLOWED_GOAL_VALUES, ALLOWED_FEELING_VALUES } from "../../../constants/intake";
 
 export const runtime = "nodejs";
 
@@ -9,14 +10,6 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function OPTIONS(req: Request) {
   return handleOPTIONS(req);
-}
-
-function isAllowedGoal(x: string) {
-  return ["moving", "prepping_to_downsize", "reset", "staging", "caregiving", "other"].includes(x);
-}
-
-function isAllowedFeeling(x: string) {
-  return ["overwhelmed", "excited", "sad", "motivated", "other"].includes(x);
 }
 
 export async function POST(req: Request) {
@@ -45,7 +38,7 @@ export async function POST(req: Request) {
         { status: 400, headers: corsHeaders(origin) }
       );
     }
-    if (!isAllowedGoal(goal) || !isAllowedFeeling(feeling)) {
+    if (!ALLOWED_GOAL_VALUES.includes(goal) || !ALLOWED_FEELING_VALUES.includes(feeling)) {
       return NextResponse.json(
         { error: "Invalid goal or feeling value." },
         { status: 400, headers: corsHeaders(origin) }
@@ -77,18 +70,12 @@ export async function POST(req: Request) {
     const base64 = Buffer.from(arrayBuffer).toString("base64");
     const dataUrl = `data:${mime};base64,${base64}`;
 
-    // Optionally store the raw uploaded image to Azure Blob Storage
     const container = process.env.AZURE_STORAGE_CONTAINER_IMAGES;
     if (container) {
       try {
-        const blobName = `${Date.now()}-${crypto.randomUUID()}-${(photo as File).name}`;
+        const blobName = `${Date.now()}-${crypto.randomUUID()}-${photo.name}`;
         const buf = Buffer.from(arrayBuffer);
-        const stored = await uploadImage(container, blobName, buf, mime);
-        // attach stored URL to the response payload (non-breaking addition)
-        // we'll add it to the success fallback below if parsing fails; otherwise include in JSON response
-        // temporarily store on req local var (we'll include later)
-        // @ts-ignore
-        (req as any)._stored_photo_url = stored.url;
+        await uploadImage(container, blobName, buf, mime);
       } catch (err) {
         console.error("azure upload failed:", err);
       }
@@ -102,7 +89,7 @@ User inputs:
 - Feeling: ${feeling}
 
 Chat History:
-${chatHistory.map((msg: { who: any; text: any; }) => `${msg.who}: ${msg.text}`).join('\n')}
+${chatHistory.map((msg: { who: string; text: string }) => `${msg.who}: ${msg.text}`).join('\n')}
 
 Available Life Caddie Services:
 ${SERVICES_LIST}
@@ -131,7 +118,6 @@ Rules:
           content: [
             { type: "input_text", text: "Analyze this space photo and provide a validation of the user's feelings along with one clarifying question." },
             { type: "input_image", image_url: dataUrl, detail: "auto" }
-
           ]
         }
       ],
@@ -143,9 +129,9 @@ Rules:
     const parsed = safeJsonParse(raw);
 
     const task = parsed?.task || "";
-    const follow_up_question = parsed?.follow_up_question || "";
+    const followUpQuestion = parsed?.follow_up_question || "";
 
-    if (!task || !follow_up_question) {
+    if (!task || !followUpQuestion) {
       return NextResponse.json(
         {
           task: "Thanks for sharing that — I can see this space has a lot going on, and it makes sense that you're feeling that way.",
@@ -155,7 +141,7 @@ Rules:
       );
     }
 
-    return NextResponse.json({ task, follow_up_question }, { headers: corsHeaders(origin) });
+    return NextResponse.json({ task, follow_up_question: followUpQuestion }, { headers: corsHeaders(origin) });
   } catch (err) {
     console.error("analyze route error:", err);
     return NextResponse.json(
