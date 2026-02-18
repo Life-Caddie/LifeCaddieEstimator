@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 import { UserMenu } from "../components/auth/UserMenu";
 import IntakeForm from "../components/IntakeForm";
@@ -46,6 +46,7 @@ export default function SpaceClarityTool() {
   const [chatInput, setChatInput] = useState("");
   const [contextGathered, setContextGathered] = useState(false);
 
+  const transcriptUploaded = useRef(false);
   const userEmail = useAuthEmail();
 
   async function handleConversation(userText: string) {
@@ -130,6 +131,7 @@ export default function SpaceClarityTool() {
     setSubmitted(false);
     setContextGathered(false);
     setMessages([{ who: "bot", text: WELCOME_MESSAGE }]);
+    transcriptUploaded.current = false;
   }
 
   function handlePrivacyNote() {
@@ -170,7 +172,11 @@ export default function SpaceClarityTool() {
             onChatInputChange={setChatInput}
             onSendMessage={handleSendMessage}
             onPillClick={(text) => handleConversation(text)}
-            onCalendlyOpen={() => uploadTranscript(messages).catch(console.error)}
+            onCalendlyOpen={() => {
+              if (transcriptUploaded.current) return;
+              transcriptUploaded.current = true;
+              uploadTranscript(messages).catch(console.error);
+            }}
           />
         )}
       </div>
