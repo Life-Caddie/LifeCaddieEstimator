@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import crypto from "crypto";
 import { corsHeaders, handleOPTIONS, verifySession, safeJsonParse, SERVICES_LIST } from "../toolkit";
 import { uploadImage } from "../../../lib/azureStorage";
 import { ALLOWED_GOAL_VALUES, ALLOWED_FEELING_VALUES } from "../../../constants/intake";
+import { supabaseServer } from "../../../lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -70,14 +72,19 @@ export async function POST(req: Request) {
     const base64 = Buffer.from(arrayBuffer).toString("base64");
     const dataUrl = `data:${mime};base64,${base64}`;
 
-    const container = process.env.AZURE_STORAGE_CONTAINER_IMAGES;
-    if (container) {
+    // Upload photo to Azure — hoist blobName so we can track it in files table
+    const imageContainer = process.env.AZURE_STORAGE_CONTAINER_IMAGES;
+    const storageAccount = process.env.AZURE_STORAGE_ACCOUNT_NAME || "lcclaritydevstor";
+    let photoBlobName: string | null = null;
+
+    if (imageContainer) {
       try {
-        const blobName = `${Date.now()}-${crypto.randomUUID()}-${photo.name}`;
+        photoBlobName = `${Date.now()}-${crypto.randomUUID()}-${photo.name}`;
         const buf = Buffer.from(arrayBuffer);
-        await uploadImage(container, blobName, buf, mime);
+        await uploadImage(imageContainer, photoBlobName, buf, mime);
       } catch (err) {
-        console.error("azure upload failed:", err);
+        console.error("azure photo upload failed:", err);
+        photoBlobName = null;
       }
     }
 
@@ -141,7 +148,167 @@ Rules:
       );
     }
 
-    return NextResponse.json({ task, follow_up_question: followUpQuestion }, { headers: corsHeaders(origin) });
+    // --- Supabase: persist session, lead, files, and ai_artifacts ---
+    let leadId: string | null = null;
+    let sessionId: string | null = null;
+    try {
+      const clientToken = String(form.get("client_token") || "").trim();
+      const locale = String(form.get("locale") || "").trim();
+      const timezone = String(form.get("timezone") || "").trim();
+      const ua = req.headers.get("user-agent") || "";
+      const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "";
+      const ipHash = ip ? crypto.createHash("sha256").update(ip).digest("hex") : null;
+      const model = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+
+      const db = supabaseServer();
+
+      // 1. Upsert lead_session
+      if (clientToken) {
+        const { data: sessionRow, error: sessionErr } = await db
+          .from("lead_sessions")
+          .upsert(
+            {
+              client_token: clientToken,
+              user_agent: ua || null,
+              ip_hash: ipHash,
+              locale: locale || null,
+              timezone: timezone || null,
+              last_seen_at: new Date().toISOString(),
+            },
+            { onConflict: "client_token" }
+          )
+          .select("id")
+          .single();
+
+        if (sessionErr) {
+          console.error("lead_sessions upsert error:", sessionErr);
+        } else {
+          sessionId = sessionRow?.id ?? null;
+        }
+      }
+
+      // 2. Insert lead
+      const { data: leadRow, error: leadErr } = await db
+        .from("leads")
+        .insert({
+          lead_session_id: sessionId,
+          intake_intention: goal,
+          intake_feeling: feeling,
+        })
+        .select("id")
+        .single();
+
+      if (leadErr) {
+        console.error("leads insert error:", leadErr);
+      } else {
+        leadId = leadRow?.id ?? null;
+      }
+
+      // 3. Insert files record for the intake photo
+      let photoFileId: string | null = null;
+      if (photoBlobName && imageContainer && leadId) {
+        const { data: photoFileRow, error: photoFileErr } = await db
+          .from("files")
+          .insert({
+            lead_session_id: sessionId,
+            lead_id: leadId,
+            file_type: "room_image",
+            storage_account: storageAccount,
+            container: imageContainer,
+            blob_path: photoBlobName,
+            content_type: mime,
+            byte_size: photo.size,
+            is_intake_photo: true,
+          })
+          .select("id")
+          .single();
+
+        if (photoFileErr) {
+          console.error("files (photo) insert error:", photoFileErr);
+        } else {
+          photoFileId = photoFileRow?.id ?? null;
+        }
+      }
+
+      // 4. Upload AI response as JSON to Azure transcript container
+      const transcriptContainer = process.env.AZURE_STORAGE_CONTAINER_TRANSCRIPTS;
+      let transcriptFileId: string | null = null;
+
+      if (transcriptContainer && leadId) {
+        const transcriptPayload = JSON.stringify({
+          goal,
+          feeling,
+          task,
+          follow_up_question: followUpQuestion,
+          model,
+          created_at: new Date().toISOString(),
+        });
+        const transcriptBuf = Buffer.from(transcriptPayload, "utf-8");
+        const transcriptBlobName = `clarity-plan-${leadId}.json`;
+
+        try {
+          await uploadImage(transcriptContainer, transcriptBlobName, transcriptBuf, "application/json");
+
+          // 5. Insert files record for the transcript JSON
+          const { data: transcriptFileRow, error: transcriptFileErr } = await db
+            .from("files")
+            .insert({
+              lead_session_id: sessionId,
+              lead_id: leadId,
+              file_type: "transcript",
+              storage_account: storageAccount,
+              container: transcriptContainer,
+              blob_path: transcriptBlobName,
+              content_type: "application/json",
+              byte_size: transcriptBuf.byteLength,
+              transcript_format: "json",
+              transcript_version: 1,
+            })
+            .select("id")
+            .single();
+
+          if (transcriptFileErr) {
+            console.error("files (transcript) insert error:", transcriptFileErr);
+          } else {
+            transcriptFileId = transcriptFileRow?.id ?? null;
+          }
+        } catch (uploadErr) {
+          console.error("azure transcript upload failed:", uploadErr);
+        }
+      }
+
+      // 6. Insert ai_artifacts record — source_file_id → photo, data links to transcript file
+      if (leadId) {
+        const { error: artifactErr } = await db.from("ai_artifacts").insert({
+          lead_session_id: sessionId,
+          lead_id: leadId,
+          source_file_id: photoFileId,
+          artifact_type: "clarity_plan",
+          version: 1,
+          is_current: true,
+          provider: "openai",
+          model,
+          text: task,
+          data: {
+            task,
+            follow_up_question: followUpQuestion,
+            transcript_file_id: transcriptFileId,
+          },
+        });
+
+        if (artifactErr) {
+          console.error("ai_artifacts insert error:", artifactErr);
+        }
+      }
+    } catch (dbErr) {
+      console.error("DB write failed (non-fatal):", dbErr);
+    }
+    // --- end Supabase ---
+
+    return NextResponse.json(
+      { task, follow_up_question: followUpQuestion, leadId, sessionId },
+      { headers: corsHeaders(origin) }
+    );
   } catch (err) {
     console.error("analyze route error:", err);
     return NextResponse.json(

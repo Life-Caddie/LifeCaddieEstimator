@@ -6,6 +6,7 @@ import { UserMenu } from "../components/auth/UserMenu";
 import IntakeForm from "../components/IntakeForm";
 import ChatView from "../components/ChatView";
 import { useAuthEmail } from "../hooks/useAuthEmail";
+import { useClientToken } from "../hooks/useClientToken";
 import { analyzeSpace, sendConversation } from "../lib/api";
 import { GOALS, FEELINGS, WELCOME_MESSAGE } from "../constants/intake";
 import type { ChatMessage } from "../lib/api";
@@ -46,9 +47,13 @@ export default function SpaceClarityTool() {
   const [chatInput, setChatInput] = useState("");
   const [contextGathered, setContextGathered] = useState(false);
 
-  const userEmail = useAuthEmail();
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
-  async function handleConversation(userText: string) {
+  const userEmail = useAuthEmail();
+  const clientToken = useClientToken();
+
+  async function handleConversation(userText: string, isPill = false) {
     if (busy) return;
 
     const withUserMsg = appendMessage(messages, userText, "user");
@@ -57,7 +62,7 @@ export default function SpaceClarityTool() {
     setConnectionStatus("Working…");
 
     try {
-      const result = await sendConversation(withUserMsg, contextGathered);
+      const result = await sendConversation(withUserMsg, contextGathered, sessionId, leadId, isPill);
 
       setMessages((prev) => {
         let updated = removeLastPlaceholder(prev, PLACEHOLDER_THINKING);
@@ -96,7 +101,9 @@ export default function SpaceClarityTool() {
     setPills([]);
 
     try {
-      const result = await analyzeSpace(photo, goal, feeling, withUserMsg);
+      const locale = navigator.language || "";
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      const result = await analyzeSpace(photo, goal, feeling, withUserMsg, clientToken ?? "", locale, timezone);
 
       setMessages((prev) => {
         let updated = removeLastPlaceholder(prev, PLACEHOLDER_ANALYZING);
@@ -106,6 +113,9 @@ export default function SpaceClarityTool() {
         }
         return updated;
       });
+
+      if (result.leadId) setLeadId(result.leadId);
+      if (result.sessionId) setSessionId(result.sessionId);
 
       setConnectionStatus("Ready");
     } catch (err) {
@@ -129,6 +139,8 @@ export default function SpaceClarityTool() {
     setConnectionStatus("Ready");
     setSubmitted(false);
     setContextGathered(false);
+    setLeadId(null);
+    setSessionId(null);
     setMessages([{ who: "bot", text: WELCOME_MESSAGE }]);
   }
 
@@ -145,7 +157,7 @@ export default function SpaceClarityTool() {
     const text = chatInput.trim();
     if (!text || busy) return;
     setChatInput("");
-    handleConversation(text);
+    handleConversation(text, false);
   }
 
   return (
@@ -169,7 +181,7 @@ export default function SpaceClarityTool() {
             chatInput={chatInput}
             onChatInputChange={setChatInput}
             onSendMessage={handleSendMessage}
-            onPillClick={(text) => handleConversation(text)}
+            onPillClick={(text) => handleConversation(text, true)}
           />
         )}
       </div>
