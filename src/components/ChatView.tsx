@@ -14,6 +14,7 @@ type Props = {
   onChatInputChange: (value: string) => void;
   onSendMessage: () => void;
   onPillClick: (text: string) => void;
+  onCalendlyOpen?: () => void;
 };
 
 export default function ChatView({
@@ -26,6 +27,7 @@ export default function ChatView({
   onChatInputChange,
   onSendMessage,
   onPillClick,
+  onCalendlyOpen,
 }: Props) {
   const chatlogRef = useRef<HTMLDivElement | null>(null);
 
@@ -58,6 +60,7 @@ export default function ChatView({
                   url="https://calendly.com/lifecaddie/consultation"
                   text={p}
                   disabled={busy}
+                  onOpen={onCalendlyOpen}
                 />
               ))
             : pills.map((p, i) => (

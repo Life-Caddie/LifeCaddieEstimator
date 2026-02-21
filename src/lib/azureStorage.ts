@@ -29,7 +29,7 @@ function getBlobServiceClient(): BlobServiceClient {
   );
 }
 
-export async function uploadImage(
+export async function uploadBlob(
   containerName: string,
   blobName: string,
   data: Buffer | Uint8Array | ArrayBuffer,

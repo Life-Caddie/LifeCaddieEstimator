@@ -7,9 +7,10 @@ type Props = {
   url: string;
   text?: string;
   disabled?: boolean;
+  onOpen?: () => void;
 };
 
-export default function CalendarButton({ url, text = "Schedule meeting", disabled = false }: Props) {
+export default function CalendarButton({ url, text = "Schedule meeting", disabled = false, onOpen }: Props) {
   const [open, setOpen] = useState(false);
   const [rootEl, setRootEl] = useState<HTMLElement | null>(null);
 
@@ -19,7 +20,7 @@ export default function CalendarButton({ url, text = "Schedule meeting", disable
 
   return (
     <>
-      <button type="button" disabled={disabled} onClick={() => setOpen(true)} className="pill">
+      <button type="button" disabled={disabled} onClick={() => { onOpen?.(); setOpen(true); }} className="pill">
         {text}
       </button>
 
