@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import CalendarButton from "./CalendarButton";
 import type { ChatMessage } from "../lib/api";
 
 type Props = {
@@ -14,6 +13,7 @@ type Props = {
   onChatInputChange: (value: string) => void;
   onSendMessage: () => void;
   onPillClick: (text: string) => void;
+  onCalendlyPillClick: () => void;
 };
 
 export default function ChatView({
@@ -26,6 +26,7 @@ export default function ChatView({
   onChatInputChange,
   onSendMessage,
   onPillClick,
+  onCalendlyPillClick,
 }: Props) {
   const chatlogRef = useRef<HTMLDivElement | null>(null);
 
@@ -53,12 +54,15 @@ export default function ChatView({
         <div className="pill-row">
           {contextGathered
             ? pills.map((p, i) => (
-                <CalendarButton
+                <button
                   key={`${p}-${i}`}
-                  url="https://calendly.com/lifecaddie/consultation"
-                  text={p}
+                  type="button"
+                  className="pill"
                   disabled={busy}
-                />
+                  onClick={onCalendlyPillClick}
+                >
+                  {p}
+                </button>
               ))
             : pills.map((p, i) => (
                 <button

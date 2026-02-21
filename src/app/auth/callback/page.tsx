@@ -21,7 +21,8 @@ export default function AuthCallbackPage() {
         await supabase.from("jobs").update({ user_id: userId }).eq("id", jobId);
       }
 
-      router.replace("/");
+      const calendlyPending = localStorage.getItem("lc_calendly_pending");
+      router.replace(calendlyPending === "1" ? "/?calendly=1" : "/");
     };
 
     finalize();
