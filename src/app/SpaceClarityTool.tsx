@@ -1,16 +1,25 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useState, useEffect } from "react";
+import { PopupModal } from "react-calendly";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 import { UserMenu } from "../components/auth/UserMenu";
+import { AuthModal } from "../components/auth/AuthModal";
 import IntakeForm from "../components/IntakeForm";
 import ChatView from "../components/ChatView";
 import { useAuthEmail } from "../hooks/useAuthEmail";
-import { analyzeSpace, sendConversation, uploadTranscript } from "../lib/api";
+import { useClientToken } from "../hooks/useClientToken";
+import { analyzeSpace, sendConversation } from "../lib/api";
+import {
+  saveConversationForAuth,
+  loadConversationState,
+  clearConversationState,
+} from "../lib/conversationStorage";
 import { GOALS, FEELINGS, WELCOME_MESSAGE } from "../constants/intake";
 import type { ChatMessage } from "../lib/api";
 import '../styles/SpaceClarityTool.css';
 
+const CALENDLY_URL = "https://calendly.com/lifecaddie/consultation";
 const PLACEHOLDER_ANALYZING = "Uploading and analyzing…";
 const PLACEHOLDER_THINKING = "Thinking…";
 
@@ -46,10 +55,61 @@ export default function SpaceClarityTool() {
   const [chatInput, setChatInput] = useState("");
   const [contextGathered, setContextGathered] = useState(false);
 
-  const transcriptUploaded = useRef(false);
-  const userEmail = useAuthEmail();
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
-  async function handleConversation(userText: string) {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [calendlyOpen, setCalendlyOpen] = useState(false);
+  const [rootEl, setRootEl] = useState<HTMLElement | null>(null);
+
+  const userEmail = useAuthEmail();
+  const clientToken = useClientToken();
+
+  // Resolve Calendly popup root element after mount
+  useEffect(() => {
+    setRootEl(
+      document.getElementById("root") ??
+      document.getElementById("__next") ??
+      document.body
+    );
+  }, []);
+
+  // On mount: check for ?calendly=1 — restore saved conversation and auto-open Calendly
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("calendly") !== "1") return;
+
+    const saved = loadConversationState();
+    if (!saved) return;
+
+    setMessages(saved.messages);
+    setPills(saved.pills);
+    setContextGathered(saved.contextGathered);
+    setLeadId(saved.leadId);
+    setSessionId(saved.sessionId);
+    setSubmitted(true);
+    setCalendlyOpen(true);
+    clearConversationState();
+
+    // Remove the URL param without a page reload
+    const url = new URL(window.location.href);
+    url.searchParams.delete("calendly");
+    window.history.replaceState({}, "", url.toString());
+  }, []);
+
+  function handleCalendlyPillClick() {
+    if (userEmail) {
+      setCalendlyOpen(true);
+    } else {
+      setShowAuthModal(true);
+    }
+  }
+
+  function handleSaveAndSignIn() {
+    saveConversationForAuth({ messages, pills, contextGathered, leadId, sessionId });
+  }
+
+  async function handleConversation(userText: string, isPill = false) {
     if (busy) return;
 
     const withUserMsg = appendMessage(messages, userText, "user");
@@ -58,7 +118,7 @@ export default function SpaceClarityTool() {
     setConnectionStatus("Working…");
 
     try {
-      const result = await sendConversation(withUserMsg, contextGathered);
+      const result = await sendConversation(withUserMsg, contextGathered, sessionId, leadId, isPill);
 
       setMessages((prev) => {
         let updated = removeLastPlaceholder(prev, PLACEHOLDER_THINKING);
@@ -97,7 +157,9 @@ export default function SpaceClarityTool() {
     setPills([]);
 
     try {
-      const result = await analyzeSpace(photo, goal, feeling, withUserMsg);
+      const locale = navigator.language || "";
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      const result = await analyzeSpace(photo, goal, feeling, withUserMsg, clientToken ?? "", locale, timezone);
 
       setMessages((prev) => {
         let updated = removeLastPlaceholder(prev, PLACEHOLDER_ANALYZING);
@@ -107,6 +169,9 @@ export default function SpaceClarityTool() {
         }
         return updated;
       });
+
+      if (result.leadId) setLeadId(result.leadId);
+      if (result.sessionId) setSessionId(result.sessionId);
 
       setConnectionStatus("Ready");
     } catch (err) {
@@ -130,6 +195,10 @@ export default function SpaceClarityTool() {
     setConnectionStatus("Ready");
     setSubmitted(false);
     setContextGathered(false);
+    setLeadId(null);
+    setSessionId(null);
+    setCalendlyOpen(false);
+    setShowAuthModal(false);
     setMessages([{ who: "bot", text: WELCOME_MESSAGE }]);
     transcriptUploaded.current = false;
   }
@@ -147,7 +216,7 @@ export default function SpaceClarityTool() {
     const text = chatInput.trim();
     if (!text || busy) return;
     setChatInput("");
-    handleConversation(text);
+    handleConversation(text, false);
   }
 
   return (
@@ -171,15 +240,27 @@ export default function SpaceClarityTool() {
             chatInput={chatInput}
             onChatInputChange={setChatInput}
             onSendMessage={handleSendMessage}
-            onPillClick={(text) => handleConversation(text)}
-            onCalendlyOpen={() => {
-              if (transcriptUploaded.current) return;
-              transcriptUploaded.current = true;
-              uploadTranscript(messages).catch(console.error);
-            }}
+            onPillClick={(text) => handleConversation(text, true)}
+            onCalendlyPillClick={handleCalendlyPillClick}
           />
         )}
       </div>
+
+      {showAuthModal && (
+        <AuthModal
+          onBeforeSignIn={handleSaveAndSignIn}
+          onCancel={() => setShowAuthModal(false)}
+        />
+      )}
+
+      {rootEl && calendlyOpen && (
+        <PopupModal
+          url={CALENDLY_URL}
+          rootElement={rootEl}
+          open={calendlyOpen}
+          onModalClose={() => setCalendlyOpen(false)}
+        />
+      )}
     </div>
   );
 }

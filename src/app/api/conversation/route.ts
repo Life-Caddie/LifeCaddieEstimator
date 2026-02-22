@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { corsHeaders, handleOPTIONS, verifySession, safeJsonParse } from "../toolkit";
 import { getConversationInstructions } from "./toneBuilder";
+import { supabaseServer } from "../../../lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -27,6 +28,9 @@ export async function POST(req: Request) {
 
     const chatHistory = Array.isArray(body.chat_history) ? body.chat_history : [];
     const contextGathered = body.context_gathered === true;
+    const sessionId: string | null = typeof body.session_id === "string" ? body.session_id : null;
+    const leadId: string | null = typeof body.lead_id === "string" ? body.lead_id : null;
+    const isPillSelection: boolean = body.is_pill_selection === true;
 
     if (!chatHistory.length) {
       return NextResponse.json(
@@ -70,6 +74,69 @@ export async function POST(req: Request) {
         { headers: corsHeaders(origin) }
       );
     }
+
+    // --- Supabase: persist artifact on pill selection only ---
+    if (isPillSelection && leadId) {
+      try {
+        const db = supabaseServer();
+        const model = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+        const latestBotText = messages[0] ?? "";
+        const summary = latestBotText.slice(0, 500);
+
+        // Get current max version for this lead
+        const { data: versionRows } = await db
+          .from("ai_artifacts")
+          .select("version")
+          .eq("lead_id", leadId)
+          .order("version", { ascending: false })
+          .limit(1);
+
+        const nextVersion = versionRows && versionRows.length > 0
+          ? (versionRows[0].version as number) + 1
+          : 1;
+
+        // Mark all prior versions stale
+        await db
+          .from("ai_artifacts")
+          .update({ is_current: false })
+          .eq("lead_id", leadId);
+
+        // Insert new artifact with full conversation snapshot
+        const { error: artifactErr } = await db.from("ai_artifacts").insert({
+          lead_session_id: sessionId,
+          lead_id: leadId,
+          artifact_type: "clarity_plan",
+          version: nextVersion,
+          is_current: true,
+          provider: "openai",
+          model,
+          text: latestBotText,
+          data: {
+            messages,
+            quick_actions: quickActions,
+            context_gathered: resultContextGathered,
+            full_history: chatHistory,
+          },
+        });
+
+        if (artifactErr) {
+          console.error("ai_artifacts insert error:", artifactErr);
+        }
+
+        // Update lead summary
+        const { error: leadErr } = await db
+          .from("leads")
+          .update({ clarity_plan_summary: summary })
+          .eq("id", leadId);
+
+        if (leadErr) {
+          console.error("leads summary update error:", leadErr);
+        }
+      } catch (dbErr) {
+        console.error("DB write failed (non-fatal):", dbErr);
+      }
+    }
+    // --- end Supabase ---
 
     return NextResponse.json(
       { messages, quick_actions: quickActions, context_gathered: resultContextGathered },

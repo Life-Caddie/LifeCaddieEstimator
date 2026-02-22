@@ -3,8 +3,14 @@
 import { supabaseBrowser } from "../../lib/supabase/browser";
 import "../../styles/GoogleSignInButton.css";
 
-export function GoogleSignInButton() {
+type Props = {
+  onBeforeRedirect?: () => void;
+};
+
+export function GoogleSignInButton({ onBeforeRedirect }: Props = {}) {
   const signIn = async () => {
+    onBeforeRedirect?.();
+
     const supabase = supabaseBrowser();
 
     const { error } = await supabase.auth.signInWithOAuth({
