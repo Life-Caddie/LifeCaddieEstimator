@@ -1,6 +1,11 @@
 export type ChatMessage = { who: "bot" | "user"; text: string };
 
-export type AnalyzeResult = { task?: string; follow_up_question?: string };
+export type AnalyzeResult = {
+  task?: string;
+  follow_up_question?: string;
+  leadId?: string;
+  sessionId?: string;
+};
 
 export type ConversationResult = {
   messages?: string[];
@@ -20,7 +25,10 @@ export async function analyzeSpace(
   file: File,
   goal: string,
   feeling: string,
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  clientToken: string,
+  locale: string,
+  timezone: string
 ): Promise<AnalyzeResult> {
   const token = await getSessionToken();
   const fd = new FormData();
@@ -28,6 +36,9 @@ export async function analyzeSpace(
   fd.append("goal", goal);
   fd.append("feeling", feeling);
   fd.append("chat_history", JSON.stringify(messages));
+  fd.append("client_token", clientToken);
+  fd.append("locale", locale);
+  fd.append("timezone", timezone);
 
   const response = await fetch("/api/analyze", {
     method: "POST",
@@ -50,7 +61,10 @@ export async function analyzeSpace(
 
 export async function sendConversation(
   messages: ChatMessage[],
-  contextGathered: boolean
+  contextGathered: boolean,
+  sessionId?: string | null,
+  leadId?: string | null,
+  isPillSelection?: boolean
 ): Promise<ConversationResult> {
   const token = await getSessionToken();
 
@@ -63,6 +77,9 @@ export async function sendConversation(
     body: JSON.stringify({
       chat_history: messages,
       context_gathered: contextGathered,
+      session_id: sessionId ?? null,
+      lead_id: leadId ?? null,
+      is_pill_selection: isPillSelection ?? false,
     }),
   });
 
