@@ -31,6 +31,7 @@ export async function POST(req: Request) {
     const sessionId: string | null = typeof body.session_id === "string" ? body.session_id : null;
     const leadId: string | null = typeof body.lead_id === "string" ? body.lead_id : null;
     const isPillSelection: boolean = body.is_pill_selection === true;
+    const isPostCalendly: boolean = body.is_post_calendly === true;
 
     if (!chatHistory.length) {
       return NextResponse.json(
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     }
 
     const userMessageCount = chatHistory.filter((msg: any) => msg.who === "user").length;
-    const instructions = getConversationInstructions(chatHistory, userMessageCount, contextGathered);
+    const instructions = getConversationInstructions(chatHistory, userMessageCount, contextGathered, isPostCalendly);
 
     const resp = await openai.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
@@ -60,7 +61,10 @@ export async function POST(req: Request) {
     const raw = resp.output_text || "";
     const parsed = safeJsonParse(raw);
 
-    const messages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 3) : [];
+    const rawMessages = Array.isArray(parsed?.messages) ? parsed.messages.slice(0, 3) : [];
+    const messages = rawMessages.map((m: string) =>
+      typeof m === "string" ? m.replace(/, or /gi, ",\n\nor ") : m
+    );
     const quickActions = Array.isArray(parsed?.quick_actions) ? parsed.quick_actions.slice(0, 3) : [];
     const resultContextGathered = typeof parsed?.context_gathered === "boolean" ? parsed.context_gathered : false;
 

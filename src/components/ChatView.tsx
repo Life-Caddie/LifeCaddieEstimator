@@ -3,6 +3,32 @@
 import React, { useEffect, useRef } from "react";
 import type { ChatMessage } from "../lib/api";
 
+function renderText(text: string): React.ReactNode {
+  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+  return text.split("\n").map((line, lineIdx) => {
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+    linkRegex.lastIndex = 0;
+    while ((match = linkRegex.exec(line)) !== null) {
+      if (match.index > lastIndex) parts.push(line.slice(lastIndex, match.index));
+      parts.push(
+        <a key={match.index} href={match[2]} target="_blank" rel="noopener noreferrer">
+          {match[1]}
+        </a>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < line.length) parts.push(line.slice(lastIndex));
+    return (
+      <React.Fragment key={lineIdx}>
+        {lineIdx > 0 && <br />}
+        {parts.length > 0 ? parts : line}
+      </React.Fragment>
+    );
+  });
+}
+
 type Props = {
   messages: ChatMessage[];
   pills: string[];
@@ -45,7 +71,7 @@ export default function ChatView({
       <div ref={chatlogRef} className="chatlog" aria-live="polite">
         {messages.map((m, idx) => (
           <div key={idx} className={`msg ${m.who === "user" ? "msg-user" : "msg-bot"}`}>
-            {m.text}
+            {renderText(m.text)}
           </div>
         ))}
       </div>

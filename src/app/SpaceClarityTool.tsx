@@ -105,6 +105,40 @@ export default function SpaceClarityTool() {
     }
   }
 
+  async function handleCalendlyClose() {
+    setCalendlyOpen(false);
+    if (busy) return;
+
+    const withMsg = appendMessage(messages, PLACEHOLDER_THINKING);
+    setMessages(withMsg);
+    setBusy(true);
+    setConnectionStatus("Working…");
+
+    try {
+      const result = await sendConversation(messages, contextGathered, sessionId, leadId, false, true);
+
+      setMessages((prev) => {
+        let updated = removeLastPlaceholder(prev, PLACEHOLDER_THINKING);
+        const outMessages = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
+        for (const m of outMessages) {
+          updated = appendMessage(updated, String(m));
+        }
+        return updated;
+      });
+
+      setPills([]);
+      setConnectionStatus("Ready");
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) =>
+        replaceLastPlaceholder(prev, PLACEHOLDER_THINKING, "You're all set! We'll see you at your consultation.")
+      );
+      setConnectionStatus("Ready");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function handleSaveAndSignIn() {
     saveConversationForAuth({ messages, pills, contextGathered, leadId, sessionId });
   }
@@ -258,7 +292,7 @@ export default function SpaceClarityTool() {
           url={CALENDLY_URL}
           rootElement={rootEl}
           open={calendlyOpen}
-          onModalClose={() => setCalendlyOpen(false)}
+          onModalClose={handleCalendlyClose}
         />
       )}
     </div>

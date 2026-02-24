@@ -1,207 +1,375 @@
-# Life Caddie Estimator App
+# Life Caddie — Space Clarity Tool
 
-An AI-powered application designed to help users evaluate their organizing needs by analyzing photos of their spaces. The app uses computer vision and conversational AI to align users with specific Life Caddie service offerings, then guides them to schedule a consultation.
+An AI-powered, mobile-first web application that helps individuals reduce overwhelm and make confident decisions about their living spaces during life transitions. Users upload a photo of a space, select their goal and emotional state, and receive a personalized "Clarity Plan" delivered through a conversational interface — ultimately guiding them to schedule a Life Caddie consultation.
 
-## Core Features
+**This is not an organizing app — it is a digital front door to life-transition support.**
 
-* **Space Clarity Tool** — Interactive UI for uploading images and capturing user goals/feelings
-* **Image Analysis** — AI-powered image recognition to assess spaces and validate user emotions
-* **Service Alignment** — Conversational flow that narrows down which Life Caddie services best fit the user's needs
-* **Calendly Scheduling** — All recommended service pill buttons open Calendly to book a consultation
-* **Session Management** — Secure JWT-based session handling for API requests
-* **Authentication** — Google OAuth via Supabase
-* **Azure Storage** — Optional photo upload to Azure Blob Storage
+---
 
 ## Conversation Flow
 
-1. **Upload + Context**: User uploads a photo, selects a goal, and picks a feeling
-2. **First Response**: Bot validates feelings, acknowledges the photo, and asks ONE clarifying question to align toward services
-3. **Service Confirmation**: After the user answers, bot recommends 2-3 matching Life Caddie services with pill buttons (each opens Calendly)
-4. **Refinement**: Further conversation narrows recommendations to 1-2 services; pill buttons continue targeting Calendly
+1. **Intake**: User uploads a photo, selects a goal (moving, downsizing, reset, staging, caregiving, other), and picks a feeling (overwhelmed, excited, sad, motivated, other)
+2. **Space Analysis**: AI validates feelings, acknowledges what it sees in the photo, and asks ONE clarifying question to align toward services
+3. **Context Gathering**: User answers via pill buttons or free text; AI may ask one follow-up question
+4. **Service Confirmation**: AI recommends 2–3 matching Life Caddie services with explanation; pill buttons now represent service names
+5. **Refinement** *(optional)*: Continued conversation narrows to 1–2 best-fit services
+6. **Scheduling**: User taps a service pill → Google sign-in (if not authenticated) → Calendly consultation booking
+7. **Post-Booking**: After closing Calendly, the AI suggests one simple, specific action to prepare for the consultation and links to the full services catalog at LifeCaddie.org
+
+---
 
 ## Project Structure
 
 ```
 LifeCaddieEstimator/
-├── ExperimentalEstimator/        # Experimental Python estimator module
-│   └── context.md                # LLM context for experimental estimator
+├── docs/
+│   └── azure-blob.md                       # Azure Blob Storage setup guide
+├── scripts/
+│   └── test_analyze_upload.js              # Manual test script for /api/analyze
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── toolkit.ts              # Shared API utilities: CORS, JWT, services list, JSON parsing
-│   │   │   ├── analyze/route.ts        # POST /api/analyze — image analysis endpoint
+│   │   │   ├── toolkit.ts                  # Shared: CORS, JWT verify, services list, JSON parse
+│   │   │   ├── analyze/
+│   │   │   │   └── route.ts                # POST /api/analyze — image analysis + lead creation
 │   │   │   ├── conversation/
-│   │   │   │   ├── route.ts            # POST /api/conversation — conversation endpoint (JSON body)
-│   │   │   │   └── toneBuilder.ts      # Prompt builder for conversation stages
-│   │   │   └── session/route.ts        # GET /api/session — session token generation
-│   │   ├── auth/callback/page.tsx      # OAuth callback handler
-│   │   ├── layout.tsx                  # Next.js root layout
-│   │   ├── page.tsx                    # Home page
-│   │   └── SpaceClarityTool.tsx        # Orchestrator — state management, renders IntakeForm or ChatView
+│   │   │   │   ├── route.ts                # POST /api/conversation — chat continuation
+│   │   │   │   └── toneBuilder.ts          # Prompt builders for each conversation stage
+│   │   │   ├── session/
+│   │   │   │   └── route.ts                # GET /api/session — JWT session token
+│   │   │   └── transcript/
+│   │   │       └── route.ts                # POST /api/transcript — save transcript to Azure
+│   │   ├── auth/
+│   │   │   └── callback/
+│   │   │       └── page.tsx                # Google OAuth callback handler
+│   │   ├── layout.tsx                      # Root HTML layout
+│   │   ├── page.tsx                        # Home page entry point
+│   │   └── SpaceClarityTool.tsx            # Orchestrator — all state, renders IntakeForm or ChatView
 │   ├── components/
-│   │   ├── IntakeForm.tsx              # Photo upload form with goal/feeling selects
-│   │   ├── ChatView.tsx                # Chat log, pill buttons, and message input bar
-│   │   ├── CalendarButton.tsx          # Calendly popup button component
+│   │   ├── IntakeForm.tsx                  # Photo upload + goal/feeling form
+│   │   ├── ChatView.tsx                    # Chat log, pill buttons, message input
+│   │   ├── CalendarButton.tsx              # Calendly popup wrapper
 │   │   └── auth/
-│   │       ├── GoogleSignInButton.tsx  # Google OAuth sign-in button
-│   │       └── UserMenu.tsx            # Authenticated user menu
+│   │       ├── AuthModal.tsx               # Sign-in modal (shown before Calendly if not authenticated)
+│   │       ├── GoogleSignInButton.tsx      # Google OAuth sign-in button
+│   │       └── UserMenu.tsx                # Authenticated user email + logout
 │   ├── constants/
-│   │   └── intake.ts                   # Shared GOALS, FEELINGS, allowed values, welcome message
+│   │   └── intake.ts                       # GOALS, FEELINGS, allowed values, welcome message
 │   ├── hooks/
-│   │   └── useAuthEmail.ts             # Shared hook for tracking Supabase auth email state
+│   │   ├── useAuthEmail.ts                 # Track Supabase auth user email
+│   │   └── useClientToken.ts               # Generate/persist client device UUID token
 │   ├── lib/
-│   │   ├── api.ts                      # Client-side API functions: getSessionToken, analyzeSpace, sendConversation
-│   │   ├── azureStorage.ts             # Azure Blob Storage upload helper
+│   │   ├── api.ts                          # Client API functions + ChatMessage type
+│   │   ├── azureStorage.ts                 # Azure Blob Storage upload helper
+│   │   ├── conversationStorage.ts          # localStorage: save/restore conversation state across auth redirect
 │   │   └── supabase/
-│   │       └── browser.ts              # Browser-side Supabase client
+│   │       ├── browser.ts                  # Supabase client (browser-side)
+│   │       └── server.ts                   # Supabase client (server-side, uses service role key)
 │   ├── styles/
-│   │   ├── SpaceClarityTool.css        # Main UI styles
-│   │   ├── GoogleSignInButton.css      # Sign-in button styles
-│   │   └── UserMenu.css               # User menu styles
+│   │   ├── SpaceClarityTool.css
+│   │   ├── GoogleSignInButton.css
+│   │   ├── UserMenu.css
+│   │   └── AuthModal.css
 │   └── types/
-│       └── react-input.d.ts            # Type declaration for input capture attribute
-├── .gitignore
+│       └── react-input.d.ts                # Type declaration for input capture attribute
+├── supabase/
+│   └── migrations/
+│       └── core_db_and_schema_build.sql    # Full DB schema (tables, indexes, RLS policies)
+├── ExperimentalEstimator/                  # Experimental Python estimator module
+├── CLAUDE.md                               # Project instructions for Claude Code
+├── schema.md                               # Human-readable DB schema reference
 ├── next.config.mjs
 ├── package.json
-├── README.md
-├── requirements.txt
+├── requirements.txt                        # Python dependencies (experimental module only)
 └── tsconfig.json
 ```
 
+---
+
 ## Technology Stack
 
-* **Frontend**: Next.js, React, TypeScript
-* **Backend**: Next.js API Routes
-* **Authentication**: Supabase (Google OAuth) + JWT session tokens (jose)
-* **AI Integration**: OpenAI API (gpt-4.1-mini with vision)
-* **Scheduling**: Calendly (react-calendly)
-* **Storage**: Azure Blob Storage (optional)
-* **Python**: Optional experimental estimator module
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Framework | Next.js | ^16.1.6 |
+| UI | React + TypeScript | 18.2.0 / 5.9.3 |
+| Database + Auth | Supabase (PostgreSQL) | ^2.90.1 |
+| AI | OpenAI API (GPT-4.1-mini with vision) | ^4.0.0 |
+| File Storage | Azure Blob Storage | ^12.29.1 |
+| Azure Auth | @azure/identity | ^4.13.0 |
+| JWT | jose | ^5.9.0 |
+| Scheduling | react-calendly | ^4.4.0 |
+| Data Fetching | swr | ^2.4.0 |
 
-## Requirements
+---
 
-* **Node.js**: v18+ (LTS recommended)
-* **npm**: Included with Node.js
-* **OpenAI API Key**: Required for AI functionality
-* **Supabase Project**: Required for Google OAuth authentication
-* **Python 3.12+** (optional): Only needed for experimental Python estimator
+## Environment Variables
+
+Create a `.env.local` file in the project root (never commit this file).
+
+### Required
+
+```env
+OPENAI_API_KEY=your_openai_api_key
+LC_SESSION_JWT_SECRET=your_32_plus_character_secret
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+```
+
+### Optional — AI Model
+
+```env
+OPENAI_MODEL=gpt-4.1-mini   # Default; override with any compatible model
+```
+
+### Optional — Azure Blob Storage
+
+Photos and transcripts are stored in Azure if these are configured. Without them the app still works; files are processed in-memory only.
+
+Choose one authentication method:
+
+```env
+# Option 1: Connection string (simplest)
+AZURE_STORAGE_CONNECTION_STRING=your_connection_string
+
+# Option 2: Account name + key
+AZURE_STORAGE_ACCOUNT_NAME=your_account_name
+AZURE_STORAGE_ACCOUNT_KEY=your_account_key
+
+# Option 3: Azure AD (DefaultAzureCredential)
+AZURE_STORAGE_ACCOUNT_NAME=your_account_name
+AZURE_CLIENT_ID=your_client_id
+AZURE_TENANT_ID=your_tenant_id
+AZURE_CLIENT_SECRET=your_client_secret
+```
+
+Container names:
+
+```env
+AZURE_STORAGE_CONTAINER_IMAGES=your_images_container
+AZURE_STORAGE_CONTAINER_TRANSCRIPTS=your_transcripts_container
+```
+
+See `docs/azure-blob.md` for full setup details and authentication precedence.
+
+---
 
 ## Getting Started
 
-### 1. Clone the Repository
+### 1. Clone and install
 
 ```bash
 git clone <REPOSITORY_URL>
 cd LifeCaddieEstimator
-```
-
-### 2. Install Frontend Dependencies
-
-```bash
 npm install
 ```
 
-### 3. Configure Environment Variables
+### 2. Configure environment variables
 
-Create a `.env.local` file in the project root (do not commit):
+Create `.env.local` with the variables listed above.
 
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-LC_SESSION_JWT_SECRET=your_32_character_secret_key_here
-OPENAI_MODEL=gpt-4.1-mini
-
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Optional: Azure Blob Storage for photo persistence
-AZURE_STORAGE_CONTAINER_IMAGES=your_container_name
-AZURE_STORAGE_CONNECTION_STRING=your_connection_string
-```
-
-**Required variables:**
-- `OPENAI_API_KEY` — Your OpenAI API key for image analysis and conversation
-- `LC_SESSION_JWT_SECRET` — 32+ character secret for signing JWT session tokens
-- `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anonymous key
-
-**Optional variables:**
-- `OPENAI_MODEL` — Override the default model (defaults to `gpt-4.1-mini`)
-- `AZURE_STORAGE_CONTAINER_IMAGES` — Azure container name for photo uploads
-- `AZURE_STORAGE_CONNECTION_STRING` — Azure connection string
-
-### 4. Run the Development Server
+### 3. Run the development server
 
 ```bash
 npm run dev
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000)
+The app runs at [http://localhost:3000](http://localhost:3000).
 
-### 5. Python Setup (Optional)
-
-If you want to work with the experimental Python estimator:
-
-```bash
-python -m venv venv
-# Windows: venv\Scripts\activate
-# macOS/Linux: source venv/bin/activate
-pip install -r requirements.txt
-```
-
-## API Endpoints
-
-| Endpoint | Method | Body Format | Purpose |
-|----------|--------|-------------|---------|
-| `/api/session` | GET | — | Generate a JWT session token |
-| `/api/analyze` | POST | FormData | Submit image + goal/feeling, receive validation and clarifying question |
-| `/api/conversation` | POST | JSON | Continue conversation to align and refine service recommendations |
-
-All API endpoints support CORS for the following origins:
-- `http://localhost:3000` (development)
-- `https://lifecaddie.org` (production)
-- `https://www.lifecaddie.org` (production)
-
-## Key Architecture Details
-
-### Component Structure
-- **`SpaceClarityTool`** — Orchestrator component that manages all state and renders either `IntakeForm` or `ChatView`
-- **`IntakeForm`** — Handles photo upload, goal/feeling selection, honeypot, and form submission
-- **`ChatView`** — Renders the chat log, pill buttons (conversational or Calendly), and the message input bar
-- **`CalendarButton`** — Wraps react-calendly's `PopupModal` for scheduling
-
-### Shared Modules
-- **`constants/intake.ts`** — Single source of truth for goals, feelings, and allowed values (used by both client and server)
-- **`hooks/useAuthEmail.ts`** — Shared hook for Supabase auth state (used by `SpaceClarityTool` and `UserMenu`)
-- **`lib/api.ts`** — Client-side API layer with typed request/response functions and the shared `ChatMessage` type
-- **`api/toolkit.ts`** — Server-side shared utilities: CORS headers, JWT verification, services list, safe JSON parsing
-
-### Services List
-The 29 Life Caddie services are defined once in `src/app/api/toolkit.ts` as `SERVICES_LIST` and imported by both the analyze and conversation routes.
-
-### Prompt Stages (toneBuilder.ts)
-- **Initial**: Asks clarifying questions with quick-answer pill buttons
-- **Service Confirmation**: Recommends 2-3 services with exact service names as pills (all open Calendly)
-- **Refinement**: Narrows to 1-2 services based on continued conversation
-
-### Pill Button Behavior
-- Before `context_gathered` is true: pills are conversational answer options that continue the chat
-- After `context_gathered` is true: pills display service names and each opens the Calendly scheduling modal
-
-## Data Handling
-
-- **Image uploads** are processed in-memory and converted to base64 data URLs
-- Images are optionally persisted to Azure Blob Storage if configured
-- All API requests require a valid JWT session token
-- Session tokens are short-lived (10 minutes) and issued via `/api/session`
-
-## Building for Production
+### 4. Build for production
 
 ```bash
 npm run build
 npm start
 ```
 
-The app will run on port 3000 (configurable via environment).
+### 5. Python (optional)
+
+Only needed for the experimental Python estimator module:
+
+```bash
+python -m venv venv
+# Windows: venv\Scripts\activate  |  macOS/Linux: source venv/bin/activate
+pip install -r requirements.txt
+```
+
+---
+
+## API Endpoints
+
+| Endpoint | Method | Format | Purpose |
+|----------|--------|--------|---------|
+| `/api/session` | GET | — | Issue a short-lived JWT session token (10 min) |
+| `/api/analyze` | POST | FormData | Submit photo + goal/feeling; receive Clarity Plan and follow-up question |
+| `/api/conversation` | POST | JSON | Continue conversation; receive next messages and pill options |
+| `/api/transcript` | POST | JSON | Save full chat history to Azure Blob Storage |
+
+All endpoints enforce CORS for:
+- `http://localhost:3000` (development)
+- `https://lifecaddie.org`
+- `https://www.lifecaddie.org`
+
+All endpoints (except OPTIONS preflight) require a valid `Authorization: Bearer <token>` header using a session token from `/api/session`.
+
+---
+
+## Architecture Details
+
+### SpaceClarityTool — State Orchestrator
+
+`SpaceClarityTool.tsx` owns all application state and coordinates the full user journey:
+
+- Renders `IntakeForm` (pre-submission) or `ChatView` (post-submission)
+- Manages: `messages`, `pills`, `contextGathered`, `busy`, `leadId`, `sessionId`, `calendlyOpen`, `showAuthModal`
+- On Calendly close, automatically triggers a post-booking AI message with a personalized preparation tip
+- On auth return (`?calendly=1`), restores full conversation state from `localStorage` and auto-opens Calendly
+
+### IntakeForm
+
+- Photo upload (image files only, 5 MB max) with client-side size warning
+- Goal dropdown: Moving, Prepping to Downsize, Reset, Staging, Caregiving, Other
+- Feeling dropdown: Overwhelmed, Excited, Sad, Motivated, Other (Mixed)
+- Honeypot field for bot prevention
+
+### ChatView
+
+- Auto-scrolling chat log rendering bot and user messages
+- `renderText()` helper: converts `\n` to line breaks and `[label](url)` markdown to clickable `<a>` links
+- Pill buttons: conversational answer options before `context_gathered`; service names (opening Calendly) after
+- Chat input bar for free-text responses
+- Connection status badge: Ready / Working… / Check connection
+
+### Prompt Stages (toneBuilder.ts)
+
+| Stage | Trigger | AI Output |
+|-------|---------|-----------|
+| **Initial** | `userMessageCount < 2` | Validates feelings + asks ONE clarifying question; quick_actions are short answer options |
+| **Service Confirmation** | `userMessageCount >= 2` | Bullet-formatted list of 2–3 matching services with reasons; quick_actions are exact service names |
+| **Refinement** | `contextGathered === true` | Narrows to 1–2 best-fit services; quick_actions remain service names |
+| **Post-Calendly** | `isPostCalendly === true` | Congratulates booking + one specific prep action + link to services catalog |
+
+Chat response rules enforced by prompts:
+- Max 2 sentences per message bubble
+- No padding phrases or long preambles
+- Questions with "or" split at `, or ` with a blank line between clauses (also enforced server-side via regex)
+- Service listings formatted as bullet points: `• Life Caddie's [Name] – [one-sentence reason]`
+
+### Authentication + Calendly Flow
+
+1. User taps a service pill (after `contextGathered = true`)
+2. If not signed in → `AuthModal` with Google sign-in button
+3. `saveConversationForAuth()` persists full conversation state to `localStorage` before OAuth redirect
+4. After Google OAuth, `/auth/callback` redirects to `/?calendly=1`
+5. `SpaceClarityTool` detects `?calendly=1`, restores conversation from `localStorage`, and auto-opens Calendly
+6. On Calendly close, `handleCalendlyClose()` fires the post-booking AI prompt
+
+### Conversation State Persistence
+
+`conversationStorage.ts` manages `localStorage` keys for the auth redirect round-trip:
+- `lc_conversation_state` — Full snapshot: messages, pills, contextGathered, leadId, sessionId
+- `lc_calendly_pending` — Flag to trigger Calendly auto-open after auth
+- `lc_client_token` — Persistent device UUID for returning user identification
+
+### Azure Blob Storage
+
+`azureStorage.ts` exports a single `uploadBlob(containerName, blobName, data, contentType)` function. Auth method is resolved at runtime in priority order: connection string → account key → Azure AD (`DefaultAzureCredential`).
+
+Two containers are used:
+- **Images**: Uploaded room photos from the intake form
+- **Transcripts**: JSON conversation transcripts (saved on pill selection and after booking)
+
+---
+
+## Database Schema
+
+14 tables in Supabase PostgreSQL. See `schema.md` for full column-level detail and `supabase/migrations/core_db_and_schema_build.sql` for DDL with indexes and RLS policies.
+
+| Table | Purpose |
+|-------|---------|
+| `lead_sessions` | Anonymous device session — entry point for all users |
+| `leads` | One record per tool interaction; captures intake data and AI plan summary |
+| `ai_artifacts` | Versioned AI-generated Clarity Plans; linked to leads |
+| `files` | Records for all uploaded images and transcript JSON blobs |
+| `customers` | Converted leads with contact information |
+| `jobs` | Work orders linking customers to services |
+| `homes` | Property records associated with customers |
+| `rooms` | Individual spaces within a home |
+| `object_items` | Physical items identified in space photos |
+| `engagements` | Service bookings |
+| `estimates` | Cost estimates for service work |
+| `estimate_line_items` | Line items within estimates |
+| `job_transcript` | Chat transcripts linked to jobs |
+| `service_catalog` | Available Life Caddie services |
+
+**Key relationship chain:**
+`lead_sessions` → `leads` → `customers` → `jobs` → `homes` → `rooms`
+
+RLS policies support both anonymous and authenticated access patterns.
+
+---
+
+## Life Caddie Services
+
+29 services are defined in `src/app/api/toolkit.ts` (`SERVICES_LIST`) and injected into every AI prompt. The AI selects from this list when making recommendations; pill button labels must match exact service names.
+
+**Categories:**
+- Assessments (in-home, virtual, automated)
+- Roadmaps and action plans
+- Documentation and paper organization
+- Hands-on physical organizing and decluttering
+- Coaching (phone, real-time, side-by-side)
+- Emotional support and family mediation
+- Move-related services (pre-move sorting, staging, post-move setup)
+
+---
+
+## Security
+
+| Concern | Implementation |
+|---------|---------------|
+| Session abuse | Short-lived JWT tokens (10 min), user-agent + origin hash validation |
+| CORS | Restricted to `localhost:3000`, `lifecaddie.org`, `www.lifecaddie.org` |
+| Service role key | Never exposed to browser; only used in server-side Supabase client |
+| Photo size | 5 MB enforced client and server-side |
+| Input validation | Goal and feeling values validated against allowlists before processing |
+| Spam prevention | Honeypot field on intake form |
+| RLS | Row-Level Security policies on all Supabase tables |
+| Azure credentials | Never exposed to browser; all storage operations server-side only |
+
+---
+
+## Data Flow
+
+```
+IntakeForm submit
+  → GET /api/session  →  JWT token
+  → POST /api/analyze (FormData + JWT)
+      ↳ Validate inputs
+      ↳ Upload photo → Azure Blob Storage (images container)
+      ↳ OpenAI vision: analyze space, validate feelings, ask clarifying question
+      ↳ Upsert lead_session, insert lead, insert files record → Supabase
+      ↳ Return: task, follow_up_question, leadId, sessionId
+
+ChatView: user answers via pill or text
+  → POST /api/conversation (JSON + JWT)
+      ↳ toneBuilder selects prompt stage
+      ↳ OpenAI: generate messages + quick_actions
+      ↳ Post-process: split ", or " questions, parse markdown links
+      ↳ On pill selection: insert ai_artifact, update lead summary → Supabase
+      ↳ Return: messages[], quick_actions[], context_gathered
+
+context_gathered = true: service pills shown
+  → User taps pill
+      ↳ Not signed in? → AuthModal → Google OAuth → /auth/callback → /?calendly=1
+      ↳ Signed in? → Calendly PopupModal opens directly
+
+Calendly closed
+  → POST /api/conversation (isPostCalendly=true)
+      ↳ OpenAI: personalized prep tip + services link
+      ↳ Return: 3 messages (congratulations, action, LifeCaddie.org link)
+```
+
+---
 
 ## License
 

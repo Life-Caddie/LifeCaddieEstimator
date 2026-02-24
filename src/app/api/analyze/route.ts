@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       try {
         photoBlobName = `${Date.now()}-${crypto.randomUUID()}-${photo.name}`;
         const buf = Buffer.from(arrayBuffer);
-        await uploadImage(imageContainer, photoBlobName, buf, mime);
+        await uploadBlob(imageContainer, photoBlobName, buf, mime);
       } catch (err) {
         console.error("azure photo upload failed:", err);
         photoBlobName = null;
@@ -136,13 +136,13 @@ Rules:
     const parsed = safeJsonParse(raw);
 
     const task = parsed?.task || "";
-    const followUpQuestion = parsed?.follow_up_question || "";
+    const followUpQuestion = (parsed?.follow_up_question || "").replace(/, or /gi, ",\n\nor ");
 
     if (!task || !followUpQuestion) {
       return NextResponse.json(
         {
           task: "Thanks for sharing that — I can see this space has a lot going on, and it makes sense that you're feeling that way.",
-          follow_up_question: "Are you looking more for a structured plan to follow on your own, or would hands-on support from someone alongside you feel more helpful right now?"
+          follow_up_question: "Are you looking more for a structured plan to follow on your own,\n\nor would hands-on support from someone alongside you feel more helpful right now?"
         },
         { headers: corsHeaders(origin) }
       );
@@ -247,7 +247,7 @@ Rules:
         const transcriptBlobName = `clarity-plan-${leadId}.json`;
 
         try {
-          await uploadImage(transcriptContainer, transcriptBlobName, transcriptBuf, "application/json");
+          await uploadBlob(transcriptContainer, transcriptBlobName, transcriptBuf, "application/json");
 
           // 5. Insert files record for the transcript JSON
           const { data: transcriptFileRow, error: transcriptFileErr } = await db
