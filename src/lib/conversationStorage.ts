@@ -6,6 +6,7 @@ export type SavedConversationState = {
   contextGathered: boolean;
   leadId: string | null;
   sessionId: string | null;
+  clickedPillText?: string | null;
 };
 
 const STATE_KEY = "lc_conversation_state";

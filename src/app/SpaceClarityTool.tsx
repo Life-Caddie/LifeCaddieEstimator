@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PopupModal } from "react-calendly";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 import { UserMenu } from "../components/auth/UserMenu";
 import { AuthModal } from "../components/auth/AuthModal";
@@ -57,24 +56,17 @@ export default function SpaceClarityTool() {
 
   const [leadId, setLeadId] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [clickedPillText, setClickedPillText] = useState<string | null>(null);
 
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [calendlyOpen, setCalendlyOpen] = useState(false);
-  const [rootEl, setRootEl] = useState<HTMLElement | null>(null);
+  const [showCalendlyEmbed, setShowCalendlyEmbed] = useState(false);
+  const [schedulingComplete, setSchedulingComplete] = useState(false);
+  const [newMessagesStartIndex, setNewMessagesStartIndex] = useState(-1);
 
   const userEmail = useAuthEmail();
   const clientToken = useClientToken();
 
-  // Resolve Calendly popup root element after mount
-  useEffect(() => {
-    setRootEl(
-      document.getElementById("root") ??
-      document.getElementById("__next") ??
-      document.body
-    );
-  }, []);
-
-  // On mount: check for ?calendly=1 — restore saved conversation and auto-open Calendly
+  // On mount: check for ?calendly=1 — restore saved conversation and auto-open Calendly embed
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("calendly") !== "1") return;
@@ -87,8 +79,9 @@ export default function SpaceClarityTool() {
     setContextGathered(saved.contextGathered);
     setLeadId(saved.leadId);
     setSessionId(saved.sessionId);
+    setClickedPillText(saved.clickedPillText ?? null);
     setSubmitted(true);
-    setCalendlyOpen(true);
+    setShowCalendlyEmbed(true);
     clearConversationState();
 
     // Remove the URL param without a page reload
@@ -97,18 +90,24 @@ export default function SpaceClarityTool() {
     window.history.replaceState({}, "", url.toString());
   }, []);
 
-  function handleCalendlyPillClick() {
+  function handleCalendlyPillClick(pillText: string) {
+    setClickedPillText(pillText);
     if (userEmail) {
-      setCalendlyOpen(true);
+      setShowCalendlyEmbed(true);
     } else {
       setShowAuthModal(true);
     }
   }
 
-  async function handleCalendlyClose() {
-    setCalendlyOpen(false);
+  function handleCalendlyBack() {
+    setShowCalendlyEmbed(false);
+  }
+
+  async function handleCalendlyScheduled() {
+    setShowCalendlyEmbed(false);
     if (busy) return;
 
+    const newStartIdx = messages.length;
     const withMsg = appendMessage(messages, PLACEHOLDER_THINKING);
     setMessages(withMsg);
     setBusy(true);
@@ -126,6 +125,8 @@ export default function SpaceClarityTool() {
         return updated;
       });
 
+      setNewMessagesStartIndex(newStartIdx);
+      setSchedulingComplete(true);
       setPills([]);
       setConnectionStatus("Ready");
     } catch (err) {
@@ -133,6 +134,8 @@ export default function SpaceClarityTool() {
       setMessages((prev) =>
         replaceLastPlaceholder(prev, PLACEHOLDER_THINKING, "You're all set! We'll see you at your consultation.")
       );
+      setNewMessagesStartIndex(newStartIdx);
+      setSchedulingComplete(true);
       setConnectionStatus("Ready");
     } finally {
       setBusy(false);
@@ -140,7 +143,7 @@ export default function SpaceClarityTool() {
   }
 
   function handleSaveAndSignIn() {
-    saveConversationForAuth({ messages, pills, contextGathered, leadId, sessionId });
+    saveConversationForAuth({ messages, pills, contextGathered, leadId, sessionId, clickedPillText });
   }
 
   async function handleConversation(userText: string, isPill = false) {
@@ -231,10 +234,12 @@ export default function SpaceClarityTool() {
     setContextGathered(false);
     setLeadId(null);
     setSessionId(null);
-    setCalendlyOpen(false);
+    setClickedPillText(null);
+    setShowCalendlyEmbed(false);
+    setSchedulingComplete(false);
+    setNewMessagesStartIndex(-1);
     setShowAuthModal(false);
     setMessages([{ who: "bot", text: WELCOME_MESSAGE }]);
-    transcriptUploaded.current = false;
   }
 
   function handlePrivacyNote() {
@@ -252,6 +257,14 @@ export default function SpaceClarityTool() {
     setChatInput("");
     handleConversation(text, false);
   }
+
+  const calendlyPrefill = {
+    email: userEmail || "",
+    customAnswers: {
+      a1: clickedPillText || "",
+      a2: leadId || "",
+    },
+  };
 
   return (
     <div className="wrap">
@@ -276,6 +289,13 @@ export default function SpaceClarityTool() {
             onSendMessage={handleSendMessage}
             onPillClick={(text) => handleConversation(text, true)}
             onCalendlyPillClick={handleCalendlyPillClick}
+            showCalendlyEmbed={showCalendlyEmbed}
+            calendlyUrl={CALENDLY_URL}
+            calendlyPrefill={calendlyPrefill}
+            onCalendlyScheduled={handleCalendlyScheduled}
+            onCalendlyBack={handleCalendlyBack}
+            schedulingComplete={schedulingComplete}
+            newMessagesStartIndex={newMessagesStartIndex}
           />
         )}
       </div>
@@ -284,15 +304,6 @@ export default function SpaceClarityTool() {
         <AuthModal
           onBeforeSignIn={handleSaveAndSignIn}
           onCancel={() => setShowAuthModal(false)}
-        />
-      )}
-
-      {rootEl && calendlyOpen && (
-        <PopupModal
-          url={CALENDLY_URL}
-          rootElement={rootEl}
-          open={calendlyOpen}
-          onModalClose={handleCalendlyClose}
         />
       )}
     </div>
