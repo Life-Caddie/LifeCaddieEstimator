@@ -14,11 +14,34 @@ export default function AuthCallbackPage() {
       const { data, error } = await supabase.auth.getSession();
       if (error) console.error("getSession error:", error);
 
-      const jobId = localStorage.getItem("lc_job_id");
-      const userId = data.session?.user.id;
+      const accessToken = data.session?.access_token ?? null;
 
-      if (jobId && userId) {
-        await supabase.from("jobs").update({ user_id: userId }).eq("id", jobId);
+      // Read the lead ID saved before the OAuth redirect
+      let leadId: string | null = null;
+      try {
+        const raw = localStorage.getItem("lc_conversation_state");
+        if (raw) {
+          const saved = JSON.parse(raw);
+          leadId = saved?.leadId ?? null;
+        }
+      } catch {
+        // ignore parse errors
+      }
+
+      // Create (or retrieve) the customer record and link it to the lead
+      if (accessToken) {
+        try {
+          await fetch("/api/auth/finalize-customer", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ leadId }),
+          });
+        } catch (err) {
+          console.error("finalize-customer error:", err);
+        }
       }
 
       const calendlyPending = localStorage.getItem("lc_calendly_pending");

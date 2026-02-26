@@ -64,7 +64,8 @@ export async function sendConversation(
   contextGathered: boolean,
   sessionId?: string | null,
   leadId?: string | null,
-  isPillSelection?: boolean
+  isPillSelection?: boolean,
+  isPostCalendly?: boolean
 ): Promise<ConversationResult> {
   const token = await getSessionToken();
 
@@ -80,6 +81,7 @@ export async function sendConversation(
       session_id: sessionId ?? null,
       lead_id: leadId ?? null,
       is_pill_selection: isPillSelection ?? false,
+      is_post_calendly: isPostCalendly ?? false,
     }),
   });
 
