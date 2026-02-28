@@ -42,11 +42,11 @@
 
 .h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .badge {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #6b7280;
   border: 1px solid #e5e7eb;
   padding: 4px 10px;
@@ -56,7 +56,7 @@
 
 .label {
   display: block;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #6b7280;
   margin: 12px 0 6px;
 }
@@ -67,7 +67,7 @@
   padding: 14px 12px;
   border-radius: 14px;
   background: #f6f7f9;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .preview {
@@ -85,7 +85,7 @@
 }
 
 .small {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #6b7280;
   margin-top: 6px;
 }
@@ -97,7 +97,7 @@
   background: #fff7ed;
   border: 1px solid #fed7aa;
   color: #9a3412;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.35;
 }
 
@@ -118,7 +118,7 @@
   padding: 12px 14px;
   border-radius: 14px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .btn-disabled {
@@ -133,7 +133,7 @@
 .btn-sm {
   width: auto;
   padding: 8px 16px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .btn-secondary {
@@ -145,7 +145,7 @@
   padding: 12px 14px;
   border-radius: 14px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .row-btns {
@@ -156,7 +156,7 @@
 }
 
 .hint {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #6b7280;
   margin-top: 10px;
   line-height: 1.35;
@@ -179,7 +179,7 @@
   background: #fff;
   line-height: 1.35;
   white-space: pre-wrap;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .msg-user {
@@ -218,7 +218,7 @@
 }
 
 .pill {
-  font-size: 12px;
+  font-size: 0.75rem;
   border: 1px solid #e5e7eb;
   background: #fff;
   border-radius: 999px;
@@ -245,7 +245,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   padding: 10px 12px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .select {
@@ -253,7 +253,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   padding: 10px 12px;
-  font-size: 14px;
+  font-size: 0.875rem;
   background: #fff;
 }
 
@@ -299,7 +299,7 @@
 }
 
 .calendly-context-note {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #6b7280;
   margin: 0;
 }
