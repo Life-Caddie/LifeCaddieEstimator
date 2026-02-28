@@ -28,9 +28,8 @@ export default function CalendlyEmbed({ url, prefill, onScheduled, onBack }: Pro
       <div className="calendly-embed-header">
         <button
           type="button"
-          className="btn-secondary"
+          className="btn-secondary btn-sm"
           onClick={onBack}
-          style={{ width: 'auto', padding: '8px 16px', fontSize: '13px' }}
         >
           ← Back to chat
         </button>
