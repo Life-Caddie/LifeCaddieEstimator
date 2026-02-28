@@ -23,11 +23,6 @@
   max-width: 900px;
 }
 
-.card-primary,
-.card-secondary {
-  transition: opacity 240ms ease, transform 240ms ease, max-height 240ms ease, margin 240ms ease, border-width 240ms ease;
-}
-
 .card-secondary {
   background: #f6f7f9;
 }
@@ -297,12 +292,4 @@
   font-size: 12px;
   color: #6b7280;
   margin: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .card-primary,
-  .card-secondary {
-    transition: none;
-    transform: none;
-  }
 }
