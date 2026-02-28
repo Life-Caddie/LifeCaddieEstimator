@@ -162,7 +162,7 @@ export default function ChatView({
                 placeholder='Optional: add one detail (e.g., "this is my pantry")…'
                 className="chat-input"
               />
-              <button type="button" onClick={onSendMessage} disabled={busy} className="btn" style={{ width: "auto" }}>
+              <button type="button" onClick={onSendMessage} disabled={busy} className="btn btn-auto">
                 Send
               </button>
             </div>

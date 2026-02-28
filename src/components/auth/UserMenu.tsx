@@ -2,7 +2,7 @@
 
 import { supabaseBrowser } from "../../lib/supabase/browser";
 import { useAuthEmail } from "../../hooks/useAuthEmail";
-import "../../styles/UserMenu.css";
+import "../../styles/auth.css";
 
 export function UserMenu() {
   const email = useAuthEmail();

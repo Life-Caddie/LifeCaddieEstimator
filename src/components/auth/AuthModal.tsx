@@ -2,7 +2,7 @@
 
 import React from "react";
 import { GoogleSignInButton } from "./GoogleSignInButton";
-import "../../styles/AuthModal.css";
+import "../../styles/auth.css";
 
 type Props = {
   onBeforeSignIn: () => void;

@@ -93,20 +93,3 @@ export async function sendConversation(
 
   return (await response.json()) as ConversationResult;
 }
-
-export async function uploadTranscript(messages: ChatMessage[]): Promise<void> {
-  const token = await getSessionToken();
-
-  const response = await fetch("/api/transcript", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ chat_history: messages }),
-  });
-
-  if (!response.ok) {
-    console.error("Transcript upload failed:", response.status);
-  }
-}
