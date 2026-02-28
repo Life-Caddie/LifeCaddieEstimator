@@ -1,7 +1,7 @@
 "use client";
 
 import { supabaseBrowser } from "../../lib/supabase/browser";
-import "../../styles/GoogleSignInButton.css";
+import "../../styles/auth.css";
 
 type Props = {
   onBeforeRedirect?: () => void;
