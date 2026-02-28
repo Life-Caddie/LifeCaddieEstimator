@@ -20,7 +20,7 @@ type Props = {
 
 export default function CalendlyEmbed({ url, prefill, onScheduled, onBack }: Props) {
   useCalendlyEventListener({
-    onEventScheduled: () => onScheduled(),
+    onEventScheduled: onScheduled,
   });
 
   return (

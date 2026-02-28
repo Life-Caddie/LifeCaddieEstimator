@@ -26,20 +26,15 @@ function appendMessage(messages: ChatMessage[], text: string, who: ChatMessage["
   return [...messages, { who, text }];
 }
 
-function removeLastPlaceholder(messages: ChatMessage[], placeholder: string): ChatMessage[] {
+function resolveLastPlaceholder(messages: ChatMessage[], placeholder: string, replacement?: string): ChatMessage[] {
   const copy = [...messages];
-  if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === placeholder) {
-    copy.pop();
-  }
-  return copy;
-}
-
-function replaceLastPlaceholder(messages: ChatMessage[], placeholder: string, errorText: string): ChatMessage[] {
-  const copy = [...messages];
-  if (copy.length && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === placeholder) {
-    copy[copy.length - 1] = { who: "bot", text: errorText };
+  const isMatch = copy.length > 0 && copy[copy.length - 1].who === "bot" && copy[copy.length - 1].text === placeholder;
+  if (replacement === undefined) {
+    if (isMatch) copy.pop();
+  } else if (isMatch) {
+    copy[copy.length - 1] = { who: "bot", text: replacement };
   } else {
-    copy.push({ who: "bot", text: errorText });
+    copy.push({ who: "bot", text: replacement });
   }
   return copy;
 }
@@ -117,7 +112,7 @@ export default function SpaceClarityTool() {
       const result = await sendConversation(messages, contextGathered, sessionId, leadId, false, true);
 
       setMessages((prev) => {
-        let updated = removeLastPlaceholder(prev, PLACEHOLDER_THINKING);
+        let updated = resolveLastPlaceholder(prev, PLACEHOLDER_THINKING);
         const outMessages = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
         for (const m of outMessages) {
           updated = appendMessage(updated, String(m));
@@ -132,7 +127,7 @@ export default function SpaceClarityTool() {
     } catch (err) {
       console.error(err);
       setMessages((prev) =>
-        replaceLastPlaceholder(prev, PLACEHOLDER_THINKING, "You're all set! We'll see you at your consultation.")
+        resolveLastPlaceholder(prev, PLACEHOLDER_THINKING, "You're all set! We'll see you at your consultation.")
       );
       setNewMessagesStartIndex(newStartIdx);
       setSchedulingComplete(true);
@@ -158,7 +153,7 @@ export default function SpaceClarityTool() {
       const result = await sendConversation(withUserMsg, contextGathered, sessionId, leadId, isPill);
 
       setMessages((prev) => {
-        let updated = removeLastPlaceholder(prev, PLACEHOLDER_THINKING);
+        let updated = resolveLastPlaceholder(prev, PLACEHOLDER_THINKING);
         const outMessages = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
         for (const m of outMessages) {
           updated = appendMessage(updated, String(m));
@@ -172,7 +167,7 @@ export default function SpaceClarityTool() {
     } catch (err) {
       console.error(err);
       setMessages((prev) =>
-        replaceLastPlaceholder(prev, PLACEHOLDER_THINKING, "I couldn't respond right now. Try again or check your connection.")
+        resolveLastPlaceholder(prev, PLACEHOLDER_THINKING, "I couldn't respond right now. Try again or check your connection.")
       );
       setConnectionStatus("Check connection");
     } finally {
@@ -199,7 +194,7 @@ export default function SpaceClarityTool() {
       const result = await analyzeSpace(photo, goal, feeling, withUserMsg, clientToken ?? "", locale, timezone);
 
       setMessages((prev) => {
-        let updated = removeLastPlaceholder(prev, PLACEHOLDER_ANALYZING);
+        let updated = resolveLastPlaceholder(prev, PLACEHOLDER_ANALYZING);
         if (result.task && result.follow_up_question) {
           updated = appendMessage(updated, result.task);
           updated = appendMessage(updated, result.follow_up_question);
@@ -214,7 +209,7 @@ export default function SpaceClarityTool() {
     } catch (err) {
       console.error(err);
       setMessages((prev) =>
-        replaceLastPlaceholder(
+        resolveLastPlaceholder(
           prev,
           PLACEHOLDER_ANALYZING,
           "I couldn't generate your plan right now.\n\nTry again with a smaller photo, or check your connection."
