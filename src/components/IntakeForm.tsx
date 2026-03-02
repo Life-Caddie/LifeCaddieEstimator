@@ -58,7 +58,11 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
   return (
     <div className="card card-primary">
       <div className="card-header">
-        <h2 className="h2">Upload + 2 quick questions</h2>
+        <div className="flex-row">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" className="brand-logo" alt="Life Caddie" />
+          <h2 className="h2">Upload + 2 quick questions</h2>
+        </div>
         <div className="flex-row">{userHeader}</div>
       </div>
 
@@ -92,7 +96,7 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
 
           {imageWarning && <div className="warn">{imageWarning}</div>}
 
-          <label className="label">1) My goal for this space</label>
+          <label className="label"><span className="label-dot" aria-hidden="true">●</span>1) My goal for this space</label>
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
@@ -108,7 +112,7 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
             ))}
           </select>
 
-          <label className="label">2) How the space is making me feel</label>
+          <label className="label"><span className="label-dot" aria-hidden="true">●</span>2) How the space is making me feel</label>
           <select
             value={feeling}
             onChange={(e) => setFeeling(e.target.value)}
