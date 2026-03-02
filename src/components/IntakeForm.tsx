@@ -81,11 +81,13 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
           />
 
           {previewUrl && (
-            <div className="preview">
+            <details key={previewUrl} className="preview">
+              <summary className="preview-summary">
+                <span>{previewDetails}</span>
+              </summary>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={previewUrl} alt="Selected photo preview" className="preview-img" />
-              <div className="small">{previewDetails}</div>
-            </div>
+            </details>
           )}
 
           {imageWarning && <div className="warn">{imageWarning}</div>}
