@@ -17,11 +17,11 @@
 }
 
 .card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d4d4d4;
   border-radius: 16px;
   background: #fff;
   overflow: hidden;
-  box-shadow: 0 1px 0 rgba(17, 24, 39, 0.03);
+  box-shadow: 0 1px 0 rgba(30, 67, 90, 0.03);
   width: 100%;
   max-width: 900px;
   display: flex;
@@ -38,7 +38,7 @@
 
 .card-header {
   padding: 14px 14px 10px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #d4d4d4;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -57,8 +57,8 @@
 
 .badge {
   font-size: 0.75rem;
-  color: #6b7280;
-  border: 1px solid #e5e7eb;
+  color: #5c5c5c;
+  border: 1px solid #d4d4d4;
   padding: 4px 10px;
   border-radius: 999px;
   background: #fff;
@@ -67,13 +67,13 @@
 .label {
   display: block;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: #5c5c5c;
   margin: 12px 0 6px;
 }
 
 .file {
   width: 100%;
-  border: 1px dashed #e5e7eb;
+  border: 1px dashed #d4d4d4;
   padding: 14px 12px;
   border-radius: 14px;
   background: #f6f7f9;
@@ -82,7 +82,7 @@
 
 .preview {
   margin-top: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d4d4d4;
   border-radius: 14px;
   background: #fafafa;
 }
@@ -95,7 +95,7 @@
   align-items: center;
   justify-content: space-between;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #5c5c5c;
   user-select: none;
   gap: 8px;
 }
@@ -107,7 +107,7 @@
 .preview-summary::after {
   content: "Show photo ▾";
   white-space: nowrap;
-  color: #374151;
+  color: #4a3c39;
   font-size: 0.75rem;
 }
 
@@ -123,7 +123,7 @@ details[open] .preview-summary::after {
 
 .small {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #5c5c5c;
   margin-top: 6px;
 }
 
@@ -149,7 +149,7 @@ details[open] .preview-summary::after {
 .btn {
   width: 100%;
   border: none;
-  background: #111827;
+  background: #1e435a;
   color: #fff;
   font-weight: 700;
   padding: 12px 14px;
@@ -176,8 +176,8 @@ details[open] .preview-summary::after {
 .btn-secondary {
   width: 100%;
   background: #fff;
-  color: #111827;
-  border: 1px solid #e5e7eb;
+  color: #1e435a;
+  border: 1px solid #d4d4d4;
   font-weight: 700;
   padding: 12px 14px;
   border-radius: 14px;
@@ -194,7 +194,7 @@ details[open] .preview-summary::after {
 
 .hint {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #5c5c5c;
   margin-top: 10px;
   line-height: 1.35;
 }
@@ -211,7 +211,7 @@ details[open] .preview-summary::after {
 
 .msg {
   max-width: 92%;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d4d4d4;
   border-radius: 16px;
   padding: 10px 12px;
   background: #fff;
@@ -222,9 +222,9 @@ details[open] .preview-summary::after {
 
 .msg-user {
   align-self: flex-end;
-  background: #111827;
+  background: #1e435a;
   color: #fff;
-  border-color: #111827;
+  border-color: #1e435a;
 }
 
 .msg-bot {
@@ -232,8 +232,8 @@ details[open] .preview-summary::after {
 }
 
 .msg-new {
-  background: #f0fdf4;
-  border-color: #86efac;
+  background: #fdf6ed;
+  border-color: #e49d5d;
   animation: msg-appear 0.5s ease-out;
 }
 
@@ -258,7 +258,7 @@ details[open] .preview-summary::after {
 
 .pill {
   font-size: 0.75rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d4d4d4;
   background: #fff;
   border-radius: 999px;
   padding: 7px 10px;
@@ -266,12 +266,12 @@ details[open] .preview-summary::after {
 }
 
 .pill-cta {
-  background: #f0fdf4;
-  border-color: #86efac;
+  background: #fdf6ed;
+  border-color: #e49d5d;
 }
 
 .chat-bar {
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #d4d4d4;
   background: #fff;
   padding: 10px;
   display: flex;
@@ -282,7 +282,7 @@ details[open] .preview-summary::after {
 
 .chat-input {
   flex: 1;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d4d4d4;
   border-radius: 14px;
   padding: 10px 12px;
   font-size: 0.875rem;
@@ -290,7 +290,7 @@ details[open] .preview-summary::after {
 
 .select {
   width: 100%;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d4d4d4;
   border-radius: 14px;
   padding: 10px 12px;
   font-size: 0.875rem;
@@ -343,6 +343,6 @@ details[open] .preview-summary::after {
 
 .calendly-context-note {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #5c5c5c;
   margin: 0;
 }
