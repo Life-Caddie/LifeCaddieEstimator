@@ -119,41 +119,27 @@ export default function ChatView({
 
           {pills.length > 0 && (
             <div className="pill-row">
-              {contextGathered
-                ? (
-                  <>
-                    {pills.map((p, i) => (
-                      <button
-                        key={`${p}-${i}`}
-                        type="button"
-                        className="pill pill-cta"
-                        disabled={busy}
-                        onClick={() => onCalendlyPillClick(p)}
-                      >
-                        {p}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className="pill pill-cta"
-                      disabled={busy}
-                      onClick={() => onCalendlyPillClick("Other")}
-                    >
-                      Other
-                    </button>
-                  </>
-                )
-                : pills.map((p, i) => (
-                    <button
-                      key={`${p}-${i}`}
-                      type="button"
-                      className="pill"
-                      disabled={busy}
-                      onClick={() => onPillClick(p)}
-                    >
-                      {p}
-                    </button>
-                  ))}
+              {pills.map((p, i) => (
+                <button
+                  key={`${p}-${i}`}
+                  type="button"
+                  className={contextGathered ? "pill pill-cta" : "pill"}
+                  disabled={busy}
+                  onClick={() => contextGathered ? onCalendlyPillClick(p) : onPillClick(p)}
+                >
+                  {p}
+                </button>
+              ))}
+              {contextGathered && (
+                <button
+                  type="button"
+                  className="pill pill-cta"
+                  disabled={busy}
+                  onClick={() => onCalendlyPillClick("Other")}
+                >
+                  Other
+                </button>
+              )}
             </div>
           )}
 

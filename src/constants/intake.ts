@@ -18,5 +18,7 @@ export const FEELINGS = [
 export const ALLOWED_GOAL_VALUES = GOALS.map((g) => g.value) as readonly string[];
 export const ALLOWED_FEELING_VALUES = FEELINGS.map((f) => f.value) as readonly string[];
 
+export const MAX_PHOTO_BYTES = 5_000_000;
+
 export const WELCOME_MESSAGE =
   "Hi — I'm your Life Caddie.\n\nUpload a photo and tap the two options. I'll give you a gentle first-step plan that matches your goal and how you're feeling.";

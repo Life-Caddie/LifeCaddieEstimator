@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { GOALS, FEELINGS } from "../constants/intake";
+import { GOALS, FEELINGS, MAX_PHOTO_BYTES } from "../constants/intake";
 
 type Props = {
   busy: boolean;
@@ -37,7 +37,7 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
 
     if (!photo.type.startsWith("image/")) {
       setImageWarning("Please choose an image file.");
-    } else if (photo.size > 5_000_000) {
+    } else if (photo.size > MAX_PHOTO_BYTES) {
       setImageWarning(
         "This photo is over 5MB. On phones, smaller images upload more reliably. If possible, use a lower-resolution photo."
       );

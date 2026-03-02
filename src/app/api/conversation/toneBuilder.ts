@@ -1,13 +1,16 @@
 import { SERVICES_LIST } from "../toolkit";
+import type { ChatMessage } from "../../../lib/api";
+
+const PERSONA = "You are a calm, non-judgmental downsizing & organizing guide for 'Life Caddie'.";
 
 export function getConversationInstructions(
-  chatHistory: any[],
+  chatHistory: ChatMessage[],
   userMessageCount: number,
   contextGathered: boolean,
   isPostCalendly: boolean = false
 ): string {
   const formattedHistory = chatHistory
-    .map((msg: any) => `${msg.who}: ${msg.text}`)
+    .map((msg) => `${msg.who}: ${msg.text}`)
     .join("\n");
 
   if (isPostCalendly) {
@@ -27,7 +30,7 @@ export function getConversationInstructions(
 
 function getInitialInstructions(formattedHistory: string): string {
   return `
-You are a calm, non-judgmental downsizing & organizing guide for 'Life Caddie'.
+${PERSONA}
 
 Based on the chat history, ask ONE clarifying question to better understand the user's needs.
 
@@ -57,7 +60,7 @@ Rules:
 
 function getServiceConfirmationInstructions(formattedHistory: string): string {
   return `
-You are a calm, non-judgmental downsizing & organizing guide for 'Life Caddie'.
+${PERSONA}
 
 The user has answered your clarifying question. Recommend 2-3 Life Caddie services that best match their situation.
 
@@ -90,7 +93,7 @@ Other rules:
 
 function getRefinementInstructions(formattedHistory: string): string {
   return `
-You are a calm, non-judgmental downsizing & organizing guide for 'Life Caddie'.
+${PERSONA}
 
 The user is continuing the conversation to refine their service options. Narrow down to the best 1-2 services.
 
@@ -119,7 +122,7 @@ Rules:
 
 function getPostCalendlyInstructions(formattedHistory: string): string {
   return `
-You are a calm, non-judgmental downsizing & organizing guide for 'Life Caddie'.
+${PERSONA}
 
 The user just scheduled a consultation. Based on everything they've shared — their photo, goal, feelings, and the services discussed — suggest ONE simple, specific thing they can do to their space right now to get started and prepare for the meeting.
 
