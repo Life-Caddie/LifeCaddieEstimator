@@ -250,6 +250,17 @@ details[open] .preview-summary::after {
   align-self: flex-start;
 }
 
+.msg-bot::before {
+  content: '> ';
+  color: #e49d5d;
+  font-weight: 700;
+}
+
+.msg-bot .bullet-marker {
+  color: #e49d5d;
+  font-weight: 700;
+}
+
 .msg-new {
   background: #fdf6ed;
   border-color: #e49d5d;

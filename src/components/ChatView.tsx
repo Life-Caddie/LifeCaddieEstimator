@@ -5,15 +5,20 @@ import type { ChatMessage } from "../lib/api";
 import CalendlyEmbed from "./CalendlyEmbed";
 import type { CalendlyPrefill } from "./CalendlyEmbed";
 
-function renderText(text: string): React.ReactNode {
+const bulletRegex = /^([•\-*]|\d+\.) /;
+
+function renderText(text: string, highlightBullets = false): React.ReactNode {
   const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
   return text.split("\n").map((line, lineIdx) => {
+    const bulletMatch = highlightBullets ? line.match(bulletRegex) : null;
+    const lineBody = bulletMatch ? line.slice(bulletMatch[0].length) : line;
+
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     let match: RegExpExecArray | null;
     linkRegex.lastIndex = 0;
-    while ((match = linkRegex.exec(line)) !== null) {
-      if (match.index > lastIndex) parts.push(line.slice(lastIndex, match.index));
+    while ((match = linkRegex.exec(lineBody)) !== null) {
+      if (match.index > lastIndex) parts.push(lineBody.slice(lastIndex, match.index));
       parts.push(
         <a key={match.index} href={match[2]} target="_blank" rel="noopener noreferrer">
           {match[1]}
@@ -21,11 +26,12 @@ function renderText(text: string): React.ReactNode {
       );
       lastIndex = match.index + match[0].length;
     }
-    if (lastIndex < line.length) parts.push(line.slice(lastIndex));
+    if (lastIndex < lineBody.length) parts.push(lineBody.slice(lastIndex));
     return (
       <React.Fragment key={lineIdx}>
         {lineIdx > 0 && <br />}
-        {parts.length > 0 ? parts : line}
+        {bulletMatch && <span className="bullet-marker">{bulletMatch[0]}</span>}
+        {parts.length > 0 ? parts : lineBody}
       </React.Fragment>
     );
   });
@@ -80,7 +86,11 @@ export default function ChatView({
   return (
     <div className="card card-secondary">
       <div className="card-header">
-        <h2 className="h2">Your Life Caddie Plan</h2>
+        <div className="flex-row">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/life-caddie-logo-simple.webp" className="brand-logo" alt="Life Caddie" />
+          <h2 className="h2">Your Life Caddie Plan</h2>
+        </div>
         <span className="badge">{connectionStatus}</span>
       </div>
 
@@ -101,7 +111,7 @@ export default function ChatView({
                 : isNew ? "msg msg-bot msg-new" : "msg msg-bot";
               return (
                 <div key={idx} className={cls}>
-                  {renderText(m.text)}
+                  {renderText(m.text, m.who !== "user")}
                 </div>
               );
             })}
