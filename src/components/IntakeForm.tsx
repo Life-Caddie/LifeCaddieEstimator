@@ -60,7 +60,7 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
       <div className="card-header">
         <div className="flex-row">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" className="brand-logo" alt="Life Caddie" />
+          <img src="/life-caddie-logo-simple.webp" className="brand-logo" alt="Life Caddie" />
           <h2 className="h2">Upload + 2 quick questions</h2>
         </div>
         <div className="flex-row">{userHeader}</div>
