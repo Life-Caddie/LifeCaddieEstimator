@@ -37,11 +37,13 @@ export default function CalendlyEmbed({ url, prefill, onScheduled, onBack }: Pro
           Your session details will be shared with your consultant.
         </p>
       </div>
-      <InlineWidget
-        url={url}
-        prefill={prefill}
-        styles={{ minWidth: '280px', height: '660px' }}
-      />
+      <div className="calendly-widget-wrap">
+        <InlineWidget
+          url={url}
+          prefill={prefill}
+          styles={{ minWidth: '280px', height: '100%' }}
+        />
+      </div>
     </div>
   );
 }
