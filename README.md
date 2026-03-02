@@ -48,13 +48,13 @@ LifeCaddieEstimator/
 │   ├── components/
 │   │   ├── IntakeForm.tsx                  # Photo upload + goal/feeling form
 │   │   ├── ChatView.tsx                    # Chat log, pill buttons, message input
-│   │   ├── CalendarButton.tsx              # Calendly popup wrapper
+│   │   ├── CalendlyEmbed.tsx               # Calendly inline embed wrapper
 │   │   └── auth/
 │   │       ├── AuthModal.tsx               # Sign-in modal (shown before Calendly if not authenticated)
 │   │       ├── GoogleSignInButton.tsx      # Google OAuth sign-in button
 │   │       └── UserMenu.tsx                # Authenticated user email + logout
 │   ├── constants/
-│   │   └── intake.ts                       # GOALS, FEELINGS, allowed values, welcome message
+│   │   └── intake.ts                       # GOALS, FEELINGS, allowed values, MAX_PHOTO_BYTES, welcome message
 │   ├── hooks/
 │   │   ├── useAuthEmail.ts                 # Track Supabase auth user email
 │   │   └── useClientToken.ts               # Generate/persist client device UUID token
@@ -66,10 +66,9 @@ LifeCaddieEstimator/
 │   │       ├── browser.ts                  # Supabase client (browser-side)
 │   │       └── server.ts                   # Supabase client (server-side, uses service role key)
 │   ├── styles/
+│   │   ├── global.css
 │   │   ├── SpaceClarityTool.css
-│   │   ├── GoogleSignInButton.css
-│   │   ├── UserMenu.css
-│   │   └── AuthModal.css
+│   │   └── auth.css                        # Shared styles for AuthModal, GoogleSignInButton, UserMenu
 │   └── types/
 │       └── react-input.d.ts                # Type declaration for input capture attribute
 ├── supabase/
