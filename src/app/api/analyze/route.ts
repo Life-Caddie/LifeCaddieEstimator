@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import crypto from "crypto";
 import { corsHeaders, handleOPTIONS, verifySession, safeJsonParse, SERVICES_LIST } from "../toolkit";
 import { uploadBlob } from "../../../lib/azureStorage";
-import { ALLOWED_GOAL_VALUES, ALLOWED_FEELING_VALUES } from "../../../constants/intake";
+import { ALLOWED_GOAL_VALUES, ALLOWED_FEELING_VALUES, MAX_PHOTO_BYTES } from "../../../constants/intake";
 import { supabaseServer } from "../../../lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (photo.size > 5_000_000) {
+    if (photo.size > MAX_PHOTO_BYTES) {
       return NextResponse.json(
         { error: "Photo too large. Please use a smaller image (try under 5MB)." },
         { status: 413, headers: corsHeaders(origin) }

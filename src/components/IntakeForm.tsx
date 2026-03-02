@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { GOALS, FEELINGS } from "../constants/intake";
+import { GOALS, FEELINGS, MAX_PHOTO_BYTES } from "../constants/intake";
 
 type Props = {
   busy: boolean;
@@ -37,7 +37,7 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
 
     if (!photo.type.startsWith("image/")) {
       setImageWarning("Please choose an image file.");
-    } else if (photo.size > 5_000_000) {
+    } else if (photo.size > MAX_PHOTO_BYTES) {
       setImageWarning(
         "This photo is over 5MB. On phones, smaller images upload more reliably. If possible, use a lower-resolution photo."
       );
@@ -58,7 +58,11 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
   return (
     <div className="card card-primary">
       <div className="card-header">
-        <h2 className="h2">Upload + 2 quick questions</h2>
+        <div className="flex-row">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/life-caddie-logo-simple.webp" className="brand-logo" alt="Life Caddie" />
+          <h2 className="h2">Upload + 2 quick questions</h2>
+        </div>
         <div className="flex-row">{userHeader}</div>
       </div>
 
@@ -81,16 +85,18 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
           />
 
           {previewUrl && (
-            <div className="preview">
+            <details key={previewUrl} className="preview">
+              <summary className="preview-summary">
+                <span>{previewDetails}</span>
+              </summary>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={previewUrl} alt="Selected photo preview" className="preview-img" />
-              <div className="small">{previewDetails}</div>
-            </div>
+            </details>
           )}
 
           {imageWarning && <div className="warn">{imageWarning}</div>}
 
-          <label className="label">1) My goal for this space</label>
+          <label className="label"><span className="label-dot" aria-hidden="true">●</span>1) My goal for this space</label>
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
@@ -106,7 +112,7 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
             ))}
           </select>
 
-          <label className="label">2) How the space is making me feel</label>
+          <label className="label"><span className="label-dot" aria-hidden="true">●</span>2) How the space is making me feel</label>
           <select
             value={feeling}
             onChange={(e) => setFeeling(e.target.value)}

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { InlineWidget, useCalendlyEventListener } from 'react-calendly';
 
 export type CalendlyPrefill = {
@@ -26,22 +25,28 @@ export default function CalendlyEmbed({ url, prefill, onScheduled, onBack }: Pro
   return (
     <div className="calendly-embed-container">
       <div className="calendly-embed-header">
-        <button
-          type="button"
-          className="btn-secondary btn-sm"
-          onClick={onBack}
-        >
-          ← Back to chat
-        </button>
+        <div className="flex-row">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/life-caddie-logo-simple.webp" className="brand-logo" alt="Life Caddie" />
+          <button
+            type="button"
+            className="btn-secondary btn-sm"
+            onClick={onBack}
+          >
+            ← Back to chat
+          </button>
+        </div>
         <p className="calendly-context-note">
           Your session details will be shared with your consultant.
         </p>
       </div>
-      <InlineWidget
-        url={url}
-        prefill={prefill}
-        styles={{ minWidth: '280px', height: '660px' }}
-      />
+      <div className="calendly-widget-wrap">
+        <InlineWidget
+          url={url}
+          prefill={prefill}
+          styles={{ minWidth: '280px', height: '100%' }}
+        />
+      </div>
     </div>
   );
 }
