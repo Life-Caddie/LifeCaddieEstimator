@@ -73,7 +73,7 @@ ${formattedHistory}
 Return STRICT JSON ONLY:
 {
   "messages": string[],           // Exactly 2 bubbles: (1) one-sentence acknowledgment, (2) bullet list of 2-3 services
-  "quick_actions": string[],      // 2-3 EXACT service names from the list above
+  "quick_actions": string[],      // 2-3 service names from the list above
   "context_gathered": boolean     // true
 }
 
