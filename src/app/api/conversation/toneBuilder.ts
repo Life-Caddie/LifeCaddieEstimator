@@ -86,7 +86,7 @@ Formatting rules for messages[1] (the service list):
 Other rules:
 - messages[0]: One sentence acknowledging what they shared. Warm, not salesy.
 - messages[1]: The bullet list. Nothing else.
-- quick_actions: EXACT service names from the Available Services list.
+- quick_actions: Service names from the Available Services list.
 - Set context_gathered to true.
 `.trim();
 }
@@ -106,7 +106,7 @@ ${formattedHistory}
 Return STRICT JSON ONLY:
 {
   "messages": string[],           // 1-2 short bubbles, max 2 sentences each
-  "quick_actions": string[],      // 1-2 EXACT service names from the list
+  "quick_actions": string[],      // 1-2 service names from the list
   "context_gathered": boolean     // true
 }
 
@@ -114,7 +114,7 @@ Rules:
 - Be brief and direct — 2 sentences max per bubble.
 - Address what the user asked, then name the best-fit service(s).
 - Format any service mention as: Life Caddie's [Service Name] – [one-sentence reason].
-- quick_actions: EXACT service names from the Available Services list.
+- quick_actions: Service names from the Available Services list.
 - Set context_gathered to true.
 - Question formatting: If you ask a follow-up question containing "or", split it at the "or" with \n\n.
 `.trim();
