@@ -62,14 +62,14 @@ export async function verifySession(req: Request) {
 }
 
 export const SERVICES_LIST = `
-1. X-Minute In-Home Assessment - On-site evaluation of the home, safety concerns, organizational challenges, and support needs to determine scope and next steps. Up to 90 minutes based on magnitude of work.
-2. X-Minute Virtual Assessment - Remote consultation to assess goals, overwhelm levels, and organizational needs when in-home assessment is not required. Up to 60 minutes based on magnitude of work.
+1. X-Minute In-Home Assessment - On-site evaluation of the home, safety concerns, organizational challenges, and support needs to determine scope and next steps. Replace 'X'-minute with a number up to 90 minutes based on magnitude of work.
+2. X-Minute Virtual Assessment - Remote consultation to assess goals, overwhelm levels, and organizational needs when in-home assessment is not required. Replace 'X'-minute with a number up to 60 minutes based on magnitude of work.
 3. Automated Early Estimation - Initial automated estimate that provides a high-level sense of scope, time, and support needs before deeper assessment.
 4. Safety Analysis: DIY vs. In-Person Support - Evaluation of tasks to determine what can be safely handled independently versus what requires professional assistance.
 5. Safety & Overwhelm Review - Review focused on identifying physical, emotional, and cognitive overwhelm risks that may impact progress.
 6. Organization Roadmap (Core Deliverable) - A personalized, step-by-step plan outlining priorities, sequencing, and recommended services for sustainable organization.
 7. Personalized Life Organization Roadmap - A holistic planning document that integrates home, paperwork, routines, and life transitions into one cohesive strategy.
-8. X-Day Action Plan - A short-term, realistic plan that breaks priorities into manageable weekly actions. Up to 30 days, based on magnitude of work.
+8. X-Day Action Plan - A short-term, realistic plan that breaks priorities into manageable weekly actions. Replace 'X'-day with a number up to 30 days, based on magnitude of work.
 9. Immediate Safety & Overwhelm-Reduction Priority List - A focused list of urgent actions designed to stabilize the environment and reduce stress quickly.
 10. Priority Setting Framework - A decision-support tool that helps clients determine what matters most and what to address first.
 11. Timeline & Calendar Development (Preliminary Plan) - Creation of a realistic timeline and calendar structure to support follow-through and pacing.
