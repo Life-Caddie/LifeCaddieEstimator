@@ -88,6 +88,7 @@ Other rules:
 - messages[1]: The bullet list. Nothing else.
 - quick_actions: Service names from the Available Services list.
 - Set context_gathered to true.
+- Duration-based service names (like 30 day action plan) must have the time altered based on conversation context.
 `.trim();
 }
 
@@ -117,6 +118,7 @@ Rules:
 - quick_actions: Service names from the Available Services list.
 - Set context_gathered to true.
 - Question formatting: If you ask a follow-up question containing "or", split it at the "or" with \n\n.
+- Duration-based service names (like 30 day action plan) must have the time altered based on conversation context.
 `.trim();
 }
 
