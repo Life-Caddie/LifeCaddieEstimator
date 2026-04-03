@@ -56,7 +56,6 @@
   height: 46px;
   width: auto;
   display: block;
-  filter: brightness(0) invert(1);
   margin-bottom: 28px;
   opacity: 0;
   animation: fadeUp 0.5s ease forwards;
@@ -164,27 +163,6 @@
 
 .welcome-cta:active {
   transform: translateY(0);
-}
-
-/* Skip link */
-.welcome-skip {
-  background: none;
-  border: none;
-  font-size: 0.72rem;
-  font-family: var(--font-poppins), system-ui, sans-serif;
-  color: rgba(253, 246, 237, 0.3);
-  letter-spacing: 0.06em;
-  text-decoration: underline;
-  cursor: pointer;
-  padding: 4px 8px;
-  opacity: 0;
-  animation: fadeUp 0.5s ease forwards;
-  animation-delay: 1300ms;
-  transition: color 0.2s ease;
-}
-
-.welcome-skip:hover {
-  color: rgba(253, 246, 237, 0.55);
 }
 
 /* Shared entrance animation */
