@@ -419,3 +419,53 @@ details[open] .preview-summary::after {
   border-color: #1e435a;
   color: #1e435a;
 }
+
+/* ── How It Works trigger button ─────────────────────────── */
+
+.how-it-works-trigger {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #d4d4d4;
+  background: transparent;
+  color: #5c5c5c;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.how-it-works-trigger:hover {
+  border-color: #1e435a;
+  background: #1e435a;
+  color: #fdf6ed;
+}
+
+/* ── Inline field hints ───────────────────────────────────── */
+
+.field-hint {
+  font-size: 0.775rem;
+  color: #c4853a;
+  font-style: italic;
+  margin: 5px 0 0;
+  line-height: 1.5;
+  opacity: 0;
+  animation: fadeUp 0.4s ease forwards;
+  animation-delay: 0.2s;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

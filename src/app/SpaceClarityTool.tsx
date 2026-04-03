@@ -6,6 +6,8 @@ import { UserMenu } from "../components/auth/UserMenu";
 import { AuthModal } from "../components/auth/AuthModal";
 import IntakeForm from "../components/IntakeForm";
 import ChatView from "../components/ChatView";
+import WelcomeScreen from "../components/WelcomeScreen";
+import HowItWorksPanel from "../components/HowItWorksPanel";
 import { useAuthEmail } from "../hooks/useAuthEmail";
 import { useClientToken } from "../hooks/useClientToken";
 import { analyzeSpace, sendConversation } from "../lib/api";
@@ -53,6 +55,8 @@ export default function SpaceClarityTool() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [clickedPillText, setClickedPillText] = useState<string | null>(null);
 
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showCalendlyEmbed, setShowCalendlyEmbed] = useState(false);
   const [schedulingComplete, setSchedulingComplete] = useState(false);
@@ -263,6 +267,17 @@ export default function SpaceClarityTool() {
 
   return (
     <div className="wrap">
+      {showWelcome && (
+        <WelcomeScreen
+          onEnter={() => setShowWelcome(false)}
+          onSkip={() => setShowWelcome(false)}
+        />
+      )}
+
+      {showHowItWorks && (
+        <HowItWorksPanel onClose={() => setShowHowItWorks(false)} />
+      )}
+
       <div className="grid">
         {!submitted ? (
           <IntakeForm
@@ -270,6 +285,7 @@ export default function SpaceClarityTool() {
             onSubmit={handleSubmit}
             onPrivacyNote={handlePrivacyNote}
             onReset={handleReset}
+            onHowItWorks={() => setShowHowItWorks(true)}
             userHeader={userEmail ? <UserMenu /> : <GoogleSignInButton />}
           />
         ) : (
@@ -291,6 +307,7 @@ export default function SpaceClarityTool() {
             onCalendlyBack={handleCalendlyBack}
             schedulingComplete={schedulingComplete}
             newMessagesStartIndex={newMessagesStartIndex}
+            onHowItWorks={() => setShowHowItWorks(true)}
           />
         )}
       </div>
