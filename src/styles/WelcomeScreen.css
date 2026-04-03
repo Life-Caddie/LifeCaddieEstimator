@@ -53,9 +53,11 @@
 
 /* Logo — inverted to white */
 .welcome-logo {
-  height: 46px;
-  width: auto;
+  height: 56px;
+  width: 56px;
   display: block;
+  object-fit: cover;
+  border-radius: 50%;
   margin-bottom: 28px;
   opacity: 0;
   animation: fadeUp 0.5s ease forwards;

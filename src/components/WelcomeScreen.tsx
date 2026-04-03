@@ -65,7 +65,7 @@ export default function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
       <div className="welcome-content">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/life-caddie-logo-simple.webp"
+          src="/LifeCaddieSymbolLarge.png"
           className="welcome-logo"
           alt="Life Caddie"
         />
