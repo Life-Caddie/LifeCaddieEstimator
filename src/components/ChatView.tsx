@@ -55,6 +55,7 @@ type Props = {
   onCalendlyBack?: () => void;
   schedulingComplete?: boolean;
   newMessagesStartIndex?: number;
+  onHowItWorks?: () => void;
 };
 
 export default function ChatView({
@@ -75,6 +76,7 @@ export default function ChatView({
   onCalendlyBack = () => {},
   schedulingComplete = false,
   newMessagesStartIndex = -1,
+  onHowItWorks,
 }: Props) {
   const chatlogRef = useRef<HTMLDivElement | null>(null);
 
@@ -91,7 +93,19 @@ export default function ChatView({
           <img src="/life-caddie-logo-simple.webp" className="brand-logo" alt="Life Caddie" />
           <h2 className="h2">Your Life Caddie Plan</h2>
         </div>
-        <span className="badge">{connectionStatus}</span>
+        <div className="flex-row">
+          {onHowItWorks && (
+            <button
+              type="button"
+              className="how-it-works-trigger"
+              onClick={onHowItWorks}
+              aria-label="How it works"
+            >
+              ?
+            </button>
+          )}
+          <span className="badge">{connectionStatus}</span>
+        </div>
       </div>
 
       {showCalendlyEmbed ? (

@@ -8,6 +8,7 @@ type Props = {
   onSubmit: (photo: File, goal: string, feeling: string) => void;
   onPrivacyNote: () => void;
   onReset: () => void;
+  onHowItWorks: () => void;
   userHeader: React.ReactNode;
 };
 
@@ -15,7 +16,7 @@ function formatMB(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
-export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, userHeader }: Props) {
+export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, onHowItWorks, userHeader }: Props) {
   const [goal, setGoal] = useState("");
   const [feeling, setFeeling] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -63,7 +64,17 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
           <img src="/life-caddie-logo-simple.webp" className="brand-logo" alt="Life Caddie" />
           <h2 className="h2">Upload + 2 quick questions</h2>
         </div>
-        <div className="flex-row">{userHeader}</div>
+        <div className="flex-row">
+          <button
+            type="button"
+            className="how-it-works-trigger"
+            onClick={onHowItWorks}
+            aria-label="How it works"
+          >
+            ?
+          </button>
+          {userHeader}
+        </div>
       </div>
 
       <div className="card-body">
@@ -83,6 +94,7 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
             className="file"
             onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
           />
+          <p className="field-hint">Take a photo of any space that&apos;s been weighing on you — it doesn&apos;t need to be tidy.</p>
 
           {previewUrl && (
             <details key={previewUrl} className="preview">
@@ -111,6 +123,7 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
               </option>
             ))}
           </select>
+          <p className="field-hint">There&apos;s no wrong answer — choose what feels closest to where you are.</p>
 
           <label className="label"><span className="label-dot" aria-hidden="true">●</span>2) How the space is making me feel</label>
           <select
@@ -127,6 +140,7 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, use
               </option>
             ))}
           </select>
+          <p className="field-hint">Your feelings shape the tone of your plan. Honest is always right.</p>
 
           <div className="sticky-bar">
             <button type="submit" disabled={busy} className={`btn ${busy ? "btn-disabled" : ""}`}>
