@@ -5,7 +5,6 @@ import "../styles/WelcomeScreen.css";
 
 interface WelcomeScreenProps {
   onEnter: () => void;
-  onSkip: () => void;
 }
 
 const CameraIcon = () => (
@@ -46,7 +45,7 @@ const STEPS = [
   },
 ];
 
-export default function WelcomeScreen({ onEnter, onSkip }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
   const [exiting, setExiting] = useState(false);
 
   function handleEnter() {
@@ -96,10 +95,6 @@ export default function WelcomeScreen({ onEnter, onSkip }: WelcomeScreenProps) {
 
         <button className="welcome-cta" onClick={handleEnter}>
           Begin
-        </button>
-
-        <button className="welcome-skip" onClick={onSkip} aria-label="Skip introduction">
-          skip intro
         </button>
       </div>
     </div>
