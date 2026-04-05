@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "../../../lib/supabase/browser";
+import { STATE_KEY, CALENDLY_KEY } from "../../../lib/conversationStorage";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function AuthCallbackPage() {
       // Read the lead ID saved before the OAuth redirect
       let leadId: string | null = null;
       try {
-        const raw = localStorage.getItem("lc_conversation_state");
+        const raw = localStorage.getItem(STATE_KEY);
         if (raw) {
           const saved = JSON.parse(raw);
           leadId = saved?.leadId ?? null;
@@ -44,7 +45,7 @@ export default function AuthCallbackPage() {
         }
       }
 
-      const calendlyPending = localStorage.getItem("lc_calendly_pending");
+      const calendlyPending = localStorage.getItem(CALENDLY_KEY);
       router.replace(calendlyPending === "1" ? "/?calendly=1" : "/");
     };
 

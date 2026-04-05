@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
-import { UserMenu } from "../components/auth/UserMenu";
 import { AuthModal } from "../components/auth/AuthModal";
 import IntakeForm from "../components/IntakeForm";
 import ChatView from "../components/ChatView";
+import WelcomeScreen from "../components/WelcomeScreen";
+import HowItWorksPanel from "../components/HowItWorksPanel";
 import { useAuthEmail } from "../hooks/useAuthEmail";
 import { useClientToken } from "../hooks/useClientToken";
 import { analyzeSpace, sendConversation } from "../lib/api";
@@ -24,6 +24,15 @@ const PLACEHOLDER_THINKING = "Thinking…";
 
 function appendMessage(messages: ChatMessage[], text: string, who: ChatMessage["who"] = "bot"): ChatMessage[] {
   return [...messages, { who, text }];
+}
+
+function applyBotMessages(prev: ChatMessage[], placeholder: string, incoming: unknown): ChatMessage[] {
+  let updated = resolveLastPlaceholder(prev, placeholder);
+  const outMessages = Array.isArray(incoming) ? incoming.slice(0, 3) : [];
+  for (const m of outMessages) {
+    updated = appendMessage(updated, String(m));
+  }
+  return updated;
 }
 
 function resolveLastPlaceholder(messages: ChatMessage[], placeholder: string, replacement?: string): ChatMessage[] {
@@ -53,6 +62,8 @@ export default function SpaceClarityTool() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [clickedPillText, setClickedPillText] = useState<string | null>(null);
 
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showCalendlyEmbed, setShowCalendlyEmbed] = useState(false);
   const [schedulingComplete, setSchedulingComplete] = useState(false);
@@ -60,6 +71,11 @@ export default function SpaceClarityTool() {
 
   const userEmail = useAuthEmail();
   const clientToken = useClientToken();
+
+  // On mount: suppress welcome screen if already seen this session
+  useEffect(() => {
+    if (sessionStorage.getItem('lc_welcome_seen')) setShowWelcome(false);
+  }, []);
 
   // On mount: check for ?calendly=1 — restore saved conversation and auto-open Calendly embed
   useEffect(() => {
@@ -111,14 +127,7 @@ export default function SpaceClarityTool() {
     try {
       const result = await sendConversation(messages, contextGathered, sessionId, leadId, false, true);
 
-      setMessages((prev) => {
-        let updated = resolveLastPlaceholder(prev, PLACEHOLDER_THINKING);
-        const outMessages = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
-        for (const m of outMessages) {
-          updated = appendMessage(updated, String(m));
-        }
-        return updated;
-      });
+      setMessages((prev) => applyBotMessages(prev, PLACEHOLDER_THINKING, result.messages));
 
       setNewMessagesStartIndex(newStartIdx);
       setSchedulingComplete(true);
@@ -152,14 +161,7 @@ export default function SpaceClarityTool() {
     try {
       const result = await sendConversation(withUserMsg, contextGathered, sessionId, leadId, isPill);
 
-      setMessages((prev) => {
-        let updated = resolveLastPlaceholder(prev, PLACEHOLDER_THINKING);
-        const outMessages = Array.isArray(result.messages) ? result.messages.slice(0, 3) : [];
-        for (const m of outMessages) {
-          updated = appendMessage(updated, String(m));
-        }
-        return updated;
-      });
+      setMessages((prev) => applyBotMessages(prev, PLACEHOLDER_THINKING, result.messages));
 
       setPills(Array.isArray(result.quick_actions) ? result.quick_actions.slice(0, 3) : []);
       setContextGathered(typeof result.context_gathered === "boolean" ? result.context_gathered : false);
@@ -263,6 +265,16 @@ export default function SpaceClarityTool() {
 
   return (
     <div className="wrap">
+      {showWelcome && (
+        <WelcomeScreen
+          onEnter={() => { sessionStorage.setItem('lc_welcome_seen', '1'); setShowWelcome(false); }}
+        />
+      )}
+
+      {showHowItWorks && (
+        <HowItWorksPanel onClose={() => setShowHowItWorks(false)} />
+      )}
+
       <div className="grid">
         {!submitted ? (
           <IntakeForm
@@ -270,7 +282,8 @@ export default function SpaceClarityTool() {
             onSubmit={handleSubmit}
             onPrivacyNote={handlePrivacyNote}
             onReset={handleReset}
-            userHeader={userEmail ? <UserMenu /> : <GoogleSignInButton />}
+            onHowItWorks={() => setShowHowItWorks(true)}
+            userHeader={null}
           />
         ) : (
           <ChatView
@@ -291,6 +304,7 @@ export default function SpaceClarityTool() {
             onCalendlyBack={handleCalendlyBack}
             schedulingComplete={schedulingComplete}
             newMessagesStartIndex={newMessagesStartIndex}
+            onHowItWorks={() => setShowHowItWorks(true)}
           />
         )}
       </div>

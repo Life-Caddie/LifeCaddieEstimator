@@ -2,3 +2,14 @@ body {
   margin: 0;
   font-family: var(--font-poppins), system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

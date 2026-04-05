@@ -9,8 +9,8 @@ export type SavedConversationState = {
   clickedPillText?: string | null;
 };
 
-const STATE_KEY = "lc_conversation_state";
-const CALENDLY_KEY = "lc_calendly_pending";
+export const STATE_KEY = "lc_conversation_state";
+export const CALENDLY_KEY = "lc_calendly_pending";
 
 export function saveConversationForAuth(state: SavedConversationState): void {
   localStorage.setItem(STATE_KEY, JSON.stringify(state));
