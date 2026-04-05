@@ -65,6 +65,11 @@ export default function SpaceClarityTool() {
   const userEmail = useAuthEmail();
   const clientToken = useClientToken();
 
+  // On mount: suppress welcome screen if already seen this session
+  useEffect(() => {
+    if (sessionStorage.getItem('lc_welcome_seen')) setShowWelcome(false);
+  }, []);
+
   // On mount: check for ?calendly=1 — restore saved conversation and auto-open Calendly embed
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -269,7 +274,7 @@ export default function SpaceClarityTool() {
     <div className="wrap">
       {showWelcome && (
         <WelcomeScreen
-          onEnter={() => setShowWelcome(false)}
+          onEnter={() => { sessionStorage.setItem('lc_welcome_seen', '1'); setShowWelcome(false); }}
         />
       )}
 
