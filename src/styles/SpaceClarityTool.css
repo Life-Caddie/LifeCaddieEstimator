@@ -455,11 +455,11 @@ details[open] .preview-summary::after {
   margin: 5px 0 0;
   line-height: 1.5;
   opacity: 0;
-  animation: fadeUp 0.4s ease forwards;
+  animation: hintFadeUp 0.4s ease forwards;
   animation-delay: 0.2s;
 }
 
-@keyframes fadeUp {
+@keyframes hintFadeUp {
   from {
     opacity: 0;
     transform: translateY(6px);

@@ -167,18 +167,6 @@
   transform: translateY(0);
 }
 
-/* Shared entrance animation */
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Narrow phones: stack steps vertically */
 @media (max-width: 360px) {
   .welcome-steps {
