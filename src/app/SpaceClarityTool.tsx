@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
-import { UserMenu } from "../components/auth/UserMenu";
 import { AuthModal } from "../components/auth/AuthModal";
 import IntakeForm from "../components/IntakeForm";
 import ChatView from "../components/ChatView";
@@ -290,7 +288,7 @@ export default function SpaceClarityTool() {
             onPrivacyNote={handlePrivacyNote}
             onReset={handleReset}
             onHowItWorks={() => setShowHowItWorks(true)}
-            userHeader={userEmail ? <UserMenu /> : <GoogleSignInButton />}
+            userHeader={null}
           />
         ) : (
           <ChatView
