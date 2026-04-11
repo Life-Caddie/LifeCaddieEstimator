@@ -52,12 +52,12 @@ export default function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
         />
 
         <h1 className="welcome-headline">
-          Your space is trying<br />to tell you something.
+          Your space tells a story
         </h1>
 
         <p className="welcome-sub">
-          Upload a photo, answer two honest questions,<br />
-          and get a calm plan for what to do next.
+          Upload a photo,<br />answer two honest questions,<br />
+          and receive a judgement-free<br />plan for what to do next.
         </p>
 
         <div className="welcome-steps" aria-label="How it works">

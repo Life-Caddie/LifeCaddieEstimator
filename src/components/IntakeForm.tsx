@@ -123,7 +123,7 @@ export default function IntakeForm({ busy, onSubmit, onPrivacyNote, onReset, onH
               </option>
             ))}
           </select>
-          <p className="field-hint">There&apos;s no wrong answer — choose what feels closest to where you are.</p>
+          <p className="field-hint">There&apos;s no wrong answer — choose how you want this space to feel and function.</p>
 
           <label className="label"><span className="label-dot" aria-hidden="true">●</span>2) How the space is making me feel</label>
           <select
