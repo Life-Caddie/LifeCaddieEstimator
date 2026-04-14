@@ -4,14 +4,16 @@
 name: Build and deploy Node.js app to Azure Web App - app-clarity-prod
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: ProdBuild
     permissions:
       contents: read #This is required for actions/checkout
 
@@ -21,9 +23,21 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '22.x'
+          node-version: '24.x'
 
       - name: npm install, build, and test
+        env:
+          AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          AZURE_STORAGE_CONTAINER_IMAGES: ${{ secrets.AZURE_STORAGE_CONTAINER_IMAGES }}
+          AZURE_STORAGE_CONTAINER_TRANSCRIPTS: ${{ secrets.AZURE_STORAGE_CONTAINER_TRANSCRIPTS }}
+          AZURE_STORAGE_SAS_TOKEN: ${{ secrets.AZURE_STORAGE_SAS_TOKEN }}
+          LC_SESSION_JWT_SECRET: ${{ secrets.LC_SESSION_JWT_SECRET }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BASE_URL: ${{ secrets.BASE_URL }}
         run: |
           npm install
           npm run build --if-present
@@ -47,7 +61,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
